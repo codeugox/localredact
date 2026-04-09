@@ -1,0 +1,39 @@
+{
+  "featureId": "text-indexer-and-coords",
+  "reviewedAt": "2026-04-09T07:00:56Z",
+  "commitId": "cd315e5",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The feature implements the requested text indexing and coordinate utilities with broad test coverage, but there is a blocking mismatch with the deduplication requirement and a whitespace-mapping correctness bug around empty text items.",
+    "issues": [
+      {
+        "file": "src/core/text-index.ts",
+        "line": 75,
+        "severity": "blocking",
+        "description": "Deduplication key includes item text (`item.str`) in addition to position, so same-position overlapping items with different strings are not deduplicated. The feature contract expects dedup by position for duplicate/overlapping items, so this can retain duplicate geometry/text and produce incorrect downstream matching."
+      },
+      {
+        "file": "src/core/text-index.ts",
+        "line": 193,
+        "severity": "non_blocking",
+        "description": "Empty-string items are skipped as current items (line 189) but can still be used as `prevItem` when inserting synthetic separators. This can introduce leading/spurious synthetic spaces/newlines and shift normalized offsets when empty items appear before real text."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "knowledge",
+      "observation": "Shared architecture guidance mentions handling duplicate/overlapping text items but does not define the dedup criterion precisely (position-only vs position+string), which left room for an implementation that diverges from the feature contract.",
+      "evidence": ".factory/library/architecture.md:201 states duplicate/overlapping items are handled but does not specify key semantics; src/core/text-index.ts:75 dedups by `str|x|y`; mission features.json:470 explicitly calls for dedup by position."
+    },
+    {
+      "area": "skills",
+      "observation": "The skill procedure is high-level about edge-case testing but does not explicitly require a same-position/different-string dedup regression case; the implemented tests only verify duplicate strings at identical coordinates.",
+      "evidence": ".factory/skills/engine-worker/SKILL.md (Step 3) gives generic edge-case guidance; tests/unit/text-index.test.ts:150-154 covers only `Duplicate`/`Duplicate` at same position."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Reviewed text-indexer-and-coords (commit cd315e5): FAIL due to a blocking deduplication semantics mismatch (not position-only) plus an additional non-blocking empty-item separator bug in indexPage."
+}
