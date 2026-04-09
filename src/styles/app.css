@@ -700,3 +700,235 @@ body {
 .error-message-text {
   flex: 1;
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   Processing Screen — spinner, progress bar, phase text
+   ═══════════════════════════════════════════════════════════════════ */
+
+.processing-screen {
+  text-align: center;
+  padding: 40px 0;
+}
+
+.processing-spinner {
+  width: 40px;
+  height: 40px;
+  margin: 0 auto 24px;
+  animation: spin 1s linear infinite;
+}
+
+.processing-spinner svg {
+  width: 100%;
+  height: 100%;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.processing-header {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--950);
+  margin-bottom: 6px;
+}
+
+.processing-sub {
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--400);
+  letter-spacing: -0.01em;
+  margin-bottom: 28px;
+}
+
+.processing-bar {
+  width: 100%;
+  height: 6px;
+  background: var(--100);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+
+.processing-bar-fill {
+  height: 100%;
+  background: var(--red);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.processing-progress {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--300);
+  letter-spacing: 0.02em;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Password Modal — overlay, dialog, input, buttons, error
+   ═══════════════════════════════════════════════════════════════════ */
+
+.password-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(28, 24, 18, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  animation: fade-in 0.2s ease;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.password-modal {
+  background: var(--surface);
+  border-radius: var(--r-lg);
+  padding: 32px;
+  width: 100%;
+  max-width: 380px;
+  box-shadow: 0 8px 32px rgba(28, 24, 18, 0.18),
+    0 2px 8px rgba(28, 24, 18, 0.1);
+  text-align: center;
+  animation: modal-rise 0.25s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes modal-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.password-icon {
+  width: 32px;
+  height: 32px;
+  margin: 0 auto 16px;
+  color: var(--400);
+}
+
+.password-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.password-title {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--950);
+  margin-bottom: 6px;
+}
+
+.password-desc {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--400);
+  letter-spacing: -0.01em;
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+
+.password-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  margin-bottom: 14px;
+  background: var(--red-soft);
+  border: 1px solid var(--red-border);
+  border-radius: var(--r-sm);
+  color: var(--red);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.password-input {
+  display: block;
+  width: 100%;
+  padding: 10px 14px;
+  font-family: var(--font-ui);
+  font-size: 14px;
+  color: var(--950);
+  background: var(--bg);
+  border: 1.5px solid var(--150);
+  border-radius: var(--r-md);
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  margin-bottom: 16px;
+}
+
+.password-input:focus {
+  border-color: var(--red);
+  box-shadow: 0 0 0 3px rgba(196, 30, 30, 0.08);
+}
+
+.password-input::placeholder {
+  color: var(--300);
+}
+
+.password-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.password-cancel {
+  flex: 1;
+  padding: 10px 16px;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--500);
+  background: var(--bg);
+  border: 1.5px solid var(--150);
+  border-radius: var(--r-md);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.password-cancel:hover {
+  background: var(--100);
+  border-color: var(--200);
+}
+
+.password-submit {
+  flex: 1;
+  padding: 10px 16px;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  color: white;
+  background: var(--red);
+  border: 1.5px solid var(--red);
+  border-radius: var(--r-md);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.password-submit:hover {
+  background: var(--red-hover);
+  border-color: var(--red-hover);
+}
