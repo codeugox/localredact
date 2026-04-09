@@ -374,7 +374,12 @@ export function detectPipeline(
   }
 
   // Step 4: Merge entities (dedup, resolve overlaps, merge adjacent)
-  const mergedEntities = mergeEntities(allEntities)
+  // Build normalized text map so the merger can preserve separator characters
+  const normalizedTexts = new Map<number, string>()
+  for (const page of indexedPages) {
+    normalizedTexts.set(page.pageNum, page.text)
+  }
+  const mergedEntities = mergeEntities(allEntities, normalizedTexts)
 
   return {
     entities: mergedEntities,

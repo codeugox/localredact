@@ -190,15 +190,19 @@ export function indexPage(
     // Skip empty string items
     if (item.str.length === 0) continue
 
-    // Check if we need synthetic whitespace before this item
-    if (i > 0) {
-      const prevItem = sortedItems[i - 1]
-
-      // Skip if previous item had empty string
-      if (prevItem.str.length === 0) {
-        // Still might need newline check
+    // Check if we need synthetic whitespace before this item.
+    // Find the last non-empty item to use as reference for separator insertion.
+    // Empty items (str='') must not influence separator logic because they have
+    // no meaningful position/width and could drift normalized offsets.
+    let prevItem: TextItem | null = null
+    for (let j = i - 1; j >= 0; j--) {
+      if (sortedItems[j].str.length > 0) {
+        prevItem = sortedItems[j]
+        break
       }
+    }
 
+    if (prevItem) {
       const prevY = getY(prevItem)
       const currY = getY(item)
       const yDiff = Math.abs(prevY - currY)

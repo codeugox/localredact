@@ -36,16 +36,30 @@ function areAdjacent(
 /**
  * Merge two adjacent entities of the same type into one.
  * Takes the higher confidence, combines quads and text, spans the full offset range.
+ * When there is a gap between the two spans, preserves a space separator to avoid
+ * collapsed text like "JohnMartinez" instead of "John Martinez".
  */
-function mergeAdjacent(a: DetectedEntity, b: DetectedEntity): DetectedEntity {
+function mergeAdjacent(a: DetectedEntity, b: DetectedEntity, normalizedText?: string): DetectedEntity {
   // Ensure a comes first
   const first = a.textOffset.start <= b.textOffset.start ? a : b
   const second = a.textOffset.start <= b.textOffset.start ? b : a
 
+  // Determine separator between the two spans
+  let separator = ''
+  if (first.textOffset.end < second.textOffset.start) {
+    if (normalizedText) {
+      // Use the actual characters between the two offsets from the normalized string
+      separator = normalizedText.slice(first.textOffset.end, second.textOffset.start)
+    } else {
+      // Fallback: insert a space when there is a gap between adjacent spans
+      separator = ' '
+    }
+  }
+
   return {
     id: first.id,
     type: first.type,
-    text: first.text + second.text,
+    text: first.text + separator + second.text,
     layer: first.layer,
     confidence: Math.max(first.confidence, second.confidence),
     decision: first.confidence >= second.confidence ? first.decision : second.decision,
@@ -66,9 +80,14 @@ function mergeAdjacent(a: DetectedEntity, b: DetectedEntity): DetectedEntity {
  * Entities on different pages are never merged.
  *
  * @param entities - Array of detected entities
+ * @param normalizedTexts - Optional map of page number → normalized page string,
+ *   used to preserve separator characters (spaces, newlines) when merging adjacent spans
  * @returns Merged array of entities
  */
-export function mergeEntities(entities: ReadonlyArray<DetectedEntity>): DetectedEntity[] {
+export function mergeEntities(
+  entities: ReadonlyArray<DetectedEntity>,
+  normalizedTexts?: ReadonlyMap<number, string>
+): DetectedEntity[] {
   if (entities.length === 0) return []
   if (entities.length === 1) return [{ ...entities[0] }]
 
@@ -90,7 +109,8 @@ export function mergeEntities(entities: ReadonlyArray<DetectedEntity>): Detected
     const resolved = resolveOverlaps(deduped)
 
     // Step 3: Merge adjacent same-type entities
-    const merged = mergeAdjacentEntities(resolved)
+    const pageText = normalizedTexts?.get(pageEntities[0].page)
+    const merged = mergeAdjacentEntities(resolved, pageText)
 
     result.push(...merged)
   }
@@ -147,7 +167,7 @@ function resolveOverlaps(entities: DetectedEntity[]): DetectedEntity[] {
  * Merge adjacent entities of the same type into a single entity.
  * Entities must be on the same page and within ADJACENT_GAP_THRESHOLD chars of each other.
  */
-function mergeAdjacentEntities(entities: DetectedEntity[]): DetectedEntity[] {
+function mergeAdjacentEntities(entities: DetectedEntity[], normalizedText?: string): DetectedEntity[] {
   if (entities.length <= 1) return entities
 
   // Sort by textOffset.start
@@ -164,7 +184,7 @@ function mergeAdjacentEntities(entities: DetectedEntity[]): DetectedEntity[] {
       areAdjacent(last.textOffset, current.textOffset)
     ) {
       // Merge adjacent same-type entities
-      merged[merged.length - 1] = mergeAdjacent(last, current)
+      merged[merged.length - 1] = mergeAdjacent(last, current, normalizedText)
     } else {
       merged.push(current)
     }

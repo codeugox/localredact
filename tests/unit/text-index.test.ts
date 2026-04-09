@@ -205,6 +205,61 @@ describe('indexPage', () => {
     expect(page.text).toContain('Hello')
   })
 
+  it('should not let leading empty items influence separator insertion (regression)', () => {
+    // Regression: empty items (str='') used as prevItem could drift normalized offsets
+    // because their position/width don't represent meaningful text content.
+    // With the fix, empty items are skipped entirely when finding the previous item
+    // for separator gap calculations.
+    const items = [
+      makeItem('', 50, 700, 0),       // empty item at start — should be ignored as prevItem
+      makeItem('', 50, 700, 0),       // another empty item — should also be ignored
+      makeItem('Hello', 60, 700, 40), // first real item
+      makeItem('World', 110, 700, 40), // second real item, gap from Hello
+    ]
+    const page = indexPage(items, defaultViewport)
+
+    // "Hello" should have no prefix newline or space from the empty items
+    expect(page.text).toMatch(/^Hello/)
+    // The space between Hello and World should be determined by the gap between
+    // the two real items, not influenced by the empty items
+    expect(page.text).toBe('Hello World')
+  })
+
+  it('should not let mid-sequence empty items affect separator between real items (regression)', () => {
+    // An empty item sitting between two real items on the same line
+    // should not affect whether a space or newline is inserted.
+    const items = [
+      makeItem('First', 50, 700, 40),
+      makeItem('', 90, 700, 0),        // empty item between real items
+      makeItem('Second', 100, 700, 50), // gap from First's end (50+40=90) to 100 = 10
+    ]
+    const page = indexPage(items, defaultViewport)
+
+    // Should determine separator based on First→Second gap, ignoring the empty item
+    expect(page.text).toContain('First')
+    expect(page.text).toContain('Second')
+    // Gap of 10 with height 12 → spaceThreshold = 12*0.15 = 1.8 → should insert space
+    expect(page.text).toBe('First Second')
+  })
+
+  it('should not let empty items on different y cause false newline (regression)', () => {
+    // An empty item at a wildly different y-position between two same-line items
+    // should not cause a false newline insertion.
+    const items = [
+      makeItem('Alpha', 50, 700, 40),
+      makeItem('', 50, 100, 0),        // empty item at very different y
+      makeItem('Beta', 100, 700, 30),   // same line as Alpha
+    ]
+    const page = indexPage(items, defaultViewport)
+
+    // The separator between Alpha and Beta should be based on Alpha→Beta only
+    expect(page.text).toContain('Alpha')
+    expect(page.text).toContain('Beta')
+    // Should NOT have a newline caused by the empty item's y=100
+    const lines = page.text.split('\n')
+    expect(lines).toHaveLength(1)
+  })
+
   it('should produce correct charMap for multi-item single line', () => {
     const items = [
       makeItem('441', 50, 700, 20),
