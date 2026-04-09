@@ -300,17 +300,21 @@
           Social Security Numbers (SSN), Individual Taxpayer IDs (ITIN), Employer IDs (EIN), credit card numbers
           (with Luhn validation), phone numbers, email addresses, dates of birth, street addresses, city/state/ZIP,
           bank account numbers, routing numbers, passport numbers, ZIP codes, driver's license numbers, dollar
-          amounts, and dates.
+          amounts, and dates. Person names are also detected when they appear next to form labels such as
+          "Patient:", "Name:", or "Emergency Contact:". However, names in running text or unlabeled names will
+          not be caught in V1.0 — V1.1 will add a NER (Named Entity Recognition) model for broader name detection.
         </div>
       </details>
 
       <details>
         <summary>What if it misses something?</summary>
         <div class="faq-body">
-          The review screen lets you see exactly what will be redacted before you download. Every detected item is
-          highlighted. You can toggle items between "redact" and "keep." If the detector misses something, you'll
-          see it's not highlighted during review. V1.1 will add AI-powered detection using a NER model for better
-          coverage.
+          The review screen shows you exactly what will be redacted before you download — every detected item is
+          highlighted, and you can toggle items between "redact" and "keep." Labeled names on forms (e.g.
+          "Patient:", "Name:", "Emergency Contact:") are detected in V1.0, but names in running text or names
+          without nearby labels may be missed. V1.1 adds AI-powered detection using a NER model for better name
+          and entity coverage. Always review the preview carefully before downloading to catch anything the
+          automated detector may have skipped.
         </div>
       </details>
 

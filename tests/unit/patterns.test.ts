@@ -25,6 +25,8 @@ import {
   MONEY_NO_SYMBOL,
   PASSPORT_VALUE,
   PASSPORT_CONTEXT,
+  PERSON_NAME_VALUE,
+  PERSON_NAME_CONTEXT,
   scoreContext,
 } from '@/core/detectors/patterns'
 
@@ -587,6 +589,124 @@ describe('PASSPORT', () => {
   it('should have context regex matching passport labels', () => {
     expect(hasMatch(PASSPORT_CONTEXT, 'Passport')).toBe(true)
     expect(hasMatch(PASSPORT_CONTEXT, 'passport number')).toBe(true)
+  })
+})
+
+// ──────────────────────────────────────────────────
+// PERSON — Labeled Person Names
+// ──────────────────────────────────────────────────
+describe('PERSON_NAME', () => {
+  describe('value regex', () => {
+    it('should match "Emily Chen"', () => {
+      expect(hasMatch(PERSON_NAME_VALUE, 'Emily Chen')).toBe(true)
+    })
+
+    it('should match "Sarah Mitchell"', () => {
+      expect(hasMatch(PERSON_NAME_VALUE, 'Sarah Mitchell')).toBe(true)
+    })
+
+    it('should match hyphenated name "Mary Jane Watson-Smith"', () => {
+      const result = matches(PERSON_NAME_VALUE, 'Mary Jane Watson-Smith')
+      expect(result.some((m) => m.includes('Watson-Smith'))).toBe(true)
+    })
+
+    it('should match name with apostrophe "John O\'Brien"', () => {
+      expect(hasMatch(PERSON_NAME_VALUE, "John O'Brien")).toBe(true)
+    })
+
+    it('should match name with middle initial "Robert J. Martinez"', () => {
+      const result = matches(PERSON_NAME_VALUE, 'Robert J. Martinez')
+      expect(result.some((m) => m.includes('Robert') && m.includes('Martinez'))).toBe(true)
+    })
+
+    it('should match single capitalized word as a name', () => {
+      expect(hasMatch(PERSON_NAME_VALUE, 'Emily')).toBe(true)
+    })
+
+    it('should not match lowercase words', () => {
+      // "lorem ipsum" has no capitalized words
+      expect(hasMatch(PERSON_NAME_VALUE, 'lorem ipsum dolor sit')).toBe(false)
+    })
+  })
+
+  describe('context regex', () => {
+    it('should match "Patient:" label', () => {
+      expect(hasMatch(PERSON_NAME_CONTEXT, 'Patient:')).toBe(true)
+    })
+
+    it('should match "Name:" label', () => {
+      expect(hasMatch(PERSON_NAME_CONTEXT, 'Name:')).toBe(true)
+    })
+
+    it('should match "Emergency Contact:" label', () => {
+      expect(hasMatch(PERSON_NAME_CONTEXT, 'Emergency Contact:')).toBe(true)
+    })
+
+    it('should match "Subscriber Name:" label', () => {
+      expect(hasMatch(PERSON_NAME_CONTEXT, 'Subscriber Name:')).toBe(true)
+    })
+
+    it('should match "Physician:" label', () => {
+      expect(hasMatch(PERSON_NAME_CONTEXT, 'Physician:')).toBe(true)
+    })
+
+    it('should match "Full Name:" label', () => {
+      expect(hasMatch(PERSON_NAME_CONTEXT, 'Full Name:')).toBe(true)
+    })
+
+    it('should match "Printed Name:" label', () => {
+      expect(hasMatch(PERSON_NAME_CONTEXT, 'Printed Name:')).toBe(true)
+    })
+
+    it('should match "Signature of:" label', () => {
+      expect(hasMatch(PERSON_NAME_CONTEXT, 'Signature of:')).toBe(true)
+    })
+
+    it('should match "First Name:" label', () => {
+      expect(hasMatch(PERSON_NAME_CONTEXT, 'First Name:')).toBe(true)
+    })
+
+    it('should match "Last Name:" label', () => {
+      expect(hasMatch(PERSON_NAME_CONTEXT, 'Last Name:')).toBe(true)
+    })
+  })
+
+  describe('context-based detection (label required)', () => {
+    it('should detect "Emily Chen" after "Patient:"', () => {
+      const text = 'Patient: Emily Chen'
+      const matchStart = text.indexOf('Emily')
+      expect(scoreContext(text, matchStart, PERSON_NAME_CONTEXT)).toBe(true)
+    })
+
+    it('should detect "Sarah Mitchell" after "Name:"', () => {
+      const text = 'Name: Sarah Mitchell'
+      const matchStart = text.indexOf('Sarah')
+      expect(scoreContext(text, matchStart, PERSON_NAME_CONTEXT)).toBe(true)
+    })
+
+    it('should detect "John O\'Brien" after "Emergency Contact:"', () => {
+      const text = "Emergency Contact: John O'Brien"
+      const matchStart = text.indexOf('John')
+      expect(scoreContext(text, matchStart, PERSON_NAME_CONTEXT)).toBe(true)
+    })
+
+    it('should NOT detect "Portland" (city name, no label)', () => {
+      const text = 'The city of Portland is beautiful.'
+      const matchStart = text.indexOf('Portland')
+      expect(scoreContext(text, matchStart, PERSON_NAME_CONTEXT)).toBe(false)
+    })
+
+    it('should NOT detect "Northwest Digital Solutions" (company name, no label)', () => {
+      const text = 'Northwest Digital Solutions is a tech company.'
+      const matchStart = text.indexOf('Northwest')
+      expect(scoreContext(text, matchStart, PERSON_NAME_CONTEXT)).toBe(false)
+    })
+
+    it('should detect "Robert Martinez" after "Physician:"', () => {
+      const text = 'Physician: Dr. Robert Martinez'
+      const matchStart = text.indexOf('Robert')
+      expect(scoreContext(text, matchStart, PERSON_NAME_CONTEXT)).toBe(true)
+    })
   })
 })
 

@@ -38,6 +38,8 @@ import {
   MONEY_NO_SYMBOL,
   PASSPORT_VALUE,
   PASSPORT_CONTEXT,
+  PERSON_NAME_VALUE,
+  PERSON_NAME_CONTEXT,
   scoreContext,
 } from '../detectors/patterns'
 import {
@@ -226,6 +228,17 @@ const PATTERN_DEFS: PatternDef[] = [
     contextRegex: PASSPORT_CONTEXT,
     baseConfidence: BASE_CONFIDENCE.NO_CONTEXT,
     contextConfidence: BASE_CONFIDENCE.FORMAT_MATCH,
+  },
+  // Person name — context-sensitive (label required).
+  // Without a label like "Name:", "Patient:", etc., confidence is 0.30
+  // (well below DISCARD threshold) so random capitalized words are never flagged.
+  // With a label, confidence is 0.90 (MODERATE_CONTEXT → auto-REDACT).
+  {
+    type: 'PERSON',
+    regex: PERSON_NAME_VALUE,
+    contextRegex: PERSON_NAME_CONTEXT,
+    baseConfidence: 0.30,
+    contextConfidence: BASE_CONFIDENCE.MODERATE_CONTEXT,
   },
 ]
 

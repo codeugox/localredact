@@ -208,6 +208,25 @@ export const PASSPORT_CONTEXT =
   /(?:passport(?:\s*(?:number|#|no\.?))?)\b/gi
 
 // ──────────────────────────────────────────────────
+// PERSON — Labeled Person Names (context-sensitive)
+// ──────────────────────────────────────────────────
+
+/**
+ * Person name value: 1-4 capitalized words, allowing hyphens and apostrophes.
+ * Matches: "Emily Chen", "Sarah Mitchell", "John O'Brien",
+ *          "Mary Jane Watson-Smith", "Robert J. Martinez"
+ */
+export const PERSON_NAME_VALUE =
+  /\b[A-Z][a-z]+(?:[-'][A-Z][a-z]+)*(?:\s+[A-Z]\.?)?(?:\s+[A-Z][a-z]+(?:[-'][A-Z][a-z]+)*){0,3}\b/g
+
+/**
+ * Person name context labels: common form labels that precede a person's name.
+ * Includes medical, insurance, employment, and general form labels.
+ */
+export const PERSON_NAME_CONTEXT =
+  /(?:(?:patient|subscriber|employee|employer|applicant|client|insured|beneficiary|emergency\s+contact|authorized\s+by|physician|provider|doctor|nurse|guardian|spouse|dependent|account\s+holder|card\s*holder)\s*(?:name)?|(?:full\s+)?name|first\s+name|last\s+name|printed\s+name|signature\s+of)\s*:?\s*/gi
+
+// ──────────────────────────────────────────────────
 // Context Scoring Helper
 // ──────────────────────────────────────────────────
 

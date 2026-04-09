@@ -40,8 +40,18 @@ vi.mock('jspdf', () => {
 
 const mockJsPDFConstructor = vi.fn()
 
+// Mock canvas.toDataURL since jsdom does not support real canvas rendering.
+// The repackager converts each canvas to a JPEG data URL before embedding.
+const MOCK_JPEG_DATA_URL = 'data:image/jpeg;base64,mockJpegData'
+vi.spyOn(HTMLCanvasElement.prototype, 'toDataURL').mockImplementation(
+  function (this: HTMLCanvasElement, type?: string) {
+    if (type === 'image/jpeg') return MOCK_JPEG_DATA_URL
+    return 'data:,'
+  }
+)
+
 // Import repackage and incremental assembly functions after mock is set up
-import { repackage, createDoc, addPageToDoc, finalizeDoc } from '@/core/redactor/repackager'
+import { repackage, createDoc, addPageToDoc, finalizeDoc, JPEG_QUALITY } from '@/core/redactor/repackager'
 
 // ─── Helpers ────────────────────────────────────────────────────────
 
@@ -307,7 +317,7 @@ describe('repackage', () => {
     expect(mockOutput).toHaveBeenCalledWith('blob')
   })
 
-  it('should pass canvas, PNG format, and correct dimensions to addImage', () => {
+  it('should pass JPEG data URL, JPEG format, and correct dimensions to addImage', () => {
     const canvas = document.createElement('canvas')
     canvas.width = 2550
     canvas.height = 3300
@@ -315,14 +325,13 @@ describe('repackage', () => {
     repackage([canvas], [{ width: 612, height: 792 }])
 
     expect(mockAddImage).toHaveBeenCalledWith(
-      canvas,
-      'PNG',
+      MOCK_JPEG_DATA_URL,
+      'JPEG',
       0,
       0,
       612,
       792,
-      'page-0',
-      'NONE'
+      'page-0'
     )
   })
 
@@ -378,14 +387,13 @@ describe('repackage', () => {
     // Second image should use the second viewport dimensions
     expect(mockAddImage).toHaveBeenNthCalledWith(
       2,
-      canvases[1],
-      'PNG',
+      MOCK_JPEG_DATA_URL,
+      'JPEG',
       0,
       0,
       842,
       595,
-      'page-1',
-      'NONE'
+      'page-1'
     )
   })
 })
@@ -425,14 +433,13 @@ describe('incremental repackager (createDoc, addPageToDoc, finalizeDoc)', () => 
 
     expect(mockAddPage).not.toHaveBeenCalled()
     expect(mockAddImage).toHaveBeenCalledWith(
-      canvas,
-      'PNG',
+      MOCK_JPEG_DATA_URL,
+      'JPEG',
       0,
       0,
       612,
       792,
-      'page-0',
-      'NONE'
+      'page-0'
     )
   })
 
