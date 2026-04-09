@@ -1208,3 +1208,275 @@ body {
   color: var(--300);
   font-style: italic;
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   Page Navigation — doc toolbar buttons, page indicator, thumbnails
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ─── Doc bar prev/next buttons ────────────────────────────────── */
+
+.doc-bar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--150);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--700);
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+  font-family: var(--font-ui);
+  line-height: 1;
+  padding: 0;
+}
+
+.doc-bar-btn:hover:not(:disabled) {
+  background: var(--100);
+  border-color: var(--200);
+}
+
+.doc-bar-btn:disabled {
+  color: var(--300);
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* ─── Page indicator ───────────────────────────────────────────── */
+
+.page-indicator {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--500);
+  letter-spacing: -0.01em;
+  user-select: none;
+}
+
+/* ─── Page navigation container ────────────────────────────────── */
+
+.page-nav {
+  border-top: 1px solid var(--150);
+  flex-shrink: 0;
+}
+
+.page-nav-toolbar {
+  display: none; /* Hidden in sidebar — toolbar is in doc-bar */
+}
+
+/* ─── Thumbnail strip ──────────────────────────────────────────── */
+
+.page-thumbs {
+  display: flex;
+  gap: 6px;
+  padding: 10px 12px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--150) transparent;
+}
+
+/* ─── Individual page thumbnail ────────────────────────────────── */
+
+.page-thumb {
+  position: relative;
+  flex-shrink: 0;
+  width: 40px;
+  height: 52px;
+  border: 1.5px solid var(--150);
+  border-radius: 3px;
+  background: var(--surface);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  user-select: none;
+}
+
+.page-thumb:hover {
+  border-color: var(--200);
+  box-shadow: 0 1px 3px rgba(28, 24, 18, 0.08);
+}
+
+.page-thumb.active {
+  border-color: var(--950);
+  border-width: 2px;
+}
+
+.page-thumb-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.page-thumb-num {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 500;
+  color: var(--300);
+}
+
+/* ─── Amber dot indicator for unresolved pages ─────────────────── */
+
+.page-thumb-dot {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--amber);
+  border: 1.5px solid var(--surface);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Entity Tooltip — dark overlay on hover with type, text, action
+   ═══════════════════════════════════════════════════════════════════ */
+
+.entity-tooltip {
+  position: absolute;
+  z-index: 50;
+  transform: translate(-50%, -100%);
+  margin-top: -8px;
+  padding: 8px 12px;
+  background: var(--950);
+  color: var(--surface);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(28, 24, 18, 0.3);
+  white-space: nowrap;
+  pointer-events: auto;
+  animation: tooltip-fade 0.12s ease;
+}
+
+.entity-tooltip.tooltip-flipped {
+  transform: translate(-50%, 0%);
+  margin-top: 8px;
+}
+
+@keyframes tooltip-fade {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -100%) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -100%) translateY(0);
+  }
+}
+
+.entity-tooltip.tooltip-flipped {
+  animation-name: tooltip-fade-up;
+}
+
+@keyframes tooltip-fade-up {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 0%) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0%) translateY(0);
+  }
+}
+
+/* ─── Tooltip content ──────────────────────────────────────────── */
+
+.tooltip-type {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+
+.tooltip-text {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--surface);
+  letter-spacing: -0.01em;
+  margin-bottom: 6px;
+}
+
+.tooltip-action {
+  display: inline-block;
+  padding: 3px 8px;
+  font-family: var(--font-ui);
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--surface);
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.12s ease;
+  letter-spacing: -0.01em;
+}
+
+.tooltip-action:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+/* ─── Tooltip arrow ────────────────────────────────────────────── */
+
+.tooltip-arrow {
+  position: absolute;
+  bottom: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 5px solid var(--950);
+}
+
+.tooltip-flipped .tooltip-arrow {
+  bottom: auto;
+  top: -5px;
+  border-top: none;
+  border-bottom: 5px solid var(--950);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Jump Button & Action Bar enhancements
+   ═══════════════════════════════════════════════════════════════════ */
+
+.action-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.action-bar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-jump {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 7px 14px;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--amber);
+  background: var(--amber-soft);
+  border: 1px solid var(--amber-border);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease;
+  letter-spacing: -0.015em;
+}
+
+.btn-jump:hover {
+  background: rgba(168, 110, 0, 0.12);
+  border-color: rgba(168, 110, 0, 0.4);
+}
