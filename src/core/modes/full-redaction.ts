@@ -1,15 +1,15 @@
 // src/core/modes/full-redaction.ts
 // Mode configuration for Full Redaction mode.
-// Full mode redacts all detected PII types including MONEY.
-// Ambiguous types (ORG, ZIP_CODE) are still marked UNCERTAIN for user review.
+// Full mode redacts ALL detected PII types — zero user review required.
+// getDefaultDecision short-circuits in FULL_REDACTION mode so these
+// defaults are not consulted, but they are kept consistent at REDACT.
 
 import type { EntityType, RedactionDecision } from '../detectors/entities'
 
 /**
  * Default redaction decisions for Full Redaction mode.
  *
- * - All PII types including MONEY → REDACT
- * - Ambiguous types (ORG, ZIP_CODE) → UNCERTAIN
+ * Every entity type → REDACT. No UNCERTAIN items exist in this mode.
  */
 export const FULL_REDACTION_DEFAULTS: Record<EntityType, RedactionDecision> = {
   US_SSN: 'REDACT',
@@ -27,6 +27,6 @@ export const FULL_REDACTION_DEFAULTS: Record<EntityType, RedactionDecision> = {
   PASSPORT: 'REDACT',
   PERSON: 'REDACT',
   MONEY: 'REDACT',
-  ORG: 'UNCERTAIN',
-  ZIP_CODE: 'UNCERTAIN',
+  ORG: 'REDACT',
+  ZIP_CODE: 'REDACT',
 }

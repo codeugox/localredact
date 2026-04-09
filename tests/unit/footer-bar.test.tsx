@@ -127,8 +127,8 @@ describe('FooterBar', () => {
       const container = renderFooterBar()
       const btn = container.querySelector('.btn-download') as HTMLButtonElement
       expect(btn.disabled).toBe(true)
-      expect(btn.style.opacity).toBe('0.28')
-      expect(btn.style.cursor).toBe('not-allowed')
+      // Disabled style is now applied via CSS class, not inline style
+      expect(btn.classList.contains('btn-download--ready')).toBe(false)
     })
 
     it('should be enabled when uncertain count is 0', () => {

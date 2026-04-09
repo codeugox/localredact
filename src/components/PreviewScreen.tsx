@@ -74,8 +74,7 @@ export function PreviewScreen() {
           <span class="note-bar-swatch note-bar-swatch--output" />
           Downloaded PDF
           <span style={{ margin: '0 6px', color: 'var(--300)' }}>·</span>
-          Text stays visible here so you can verify. The downloaded file has
-          permanent black bars — nothing recoverable.
+          In your downloaded PDF, highlights become permanent black bars. The original text is destroyed.
         </div>
 
         {/* Document viewer with canvas + SVG overlay */}

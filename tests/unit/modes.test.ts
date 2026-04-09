@@ -141,12 +141,12 @@ describe('Full Redaction mode', () => {
     expect(FULL_REDACTION_DEFAULTS.US_EIN).toBe('REDACT')
   })
 
-  it('should map ORG to UNCERTAIN (ambiguous type)', () => {
-    expect(FULL_REDACTION_DEFAULTS.ORG).toBe('UNCERTAIN')
+  it('should map ORG to REDACT (full mode redacts everything)', () => {
+    expect(FULL_REDACTION_DEFAULTS.ORG).toBe('REDACT')
   })
 
-  it('should map ZIP_CODE to UNCERTAIN (ambiguous type)', () => {
-    expect(FULL_REDACTION_DEFAULTS.ZIP_CODE).toBe('UNCERTAIN')
+  it('should map ZIP_CODE to REDACT (full mode redacts everything)', () => {
+    expect(FULL_REDACTION_DEFAULTS.ZIP_CODE).toBe('REDACT')
   })
 })
 
@@ -202,20 +202,43 @@ describe('getDefaultDecision', () => {
       expect(getDefaultDecision('US_SSN', mode, 0.95)).toBe('REDACT')
     })
 
-    it('should return UNCERTAIN for ORG with high confidence', () => {
-      expect(getDefaultDecision('ORG', mode, 0.95)).toBe('UNCERTAIN')
+    it('should return REDACT for ORG with high confidence (no uncertain in full mode)', () => {
+      expect(getDefaultDecision('ORG', mode, 0.95)).toBe('REDACT')
     })
 
-    it('should return UNCERTAIN for ZIP_CODE with high confidence', () => {
-      expect(getDefaultDecision('ZIP_CODE', mode, 0.95)).toBe('UNCERTAIN')
+    it('should return REDACT for ZIP_CODE with high confidence (no uncertain in full mode)', () => {
+      expect(getDefaultDecision('ZIP_CODE', mode, 0.95)).toBe('REDACT')
     })
 
-    it('should return UNCERTAIN for non-ambiguous types when confidence is medium', () => {
-      expect(getDefaultDecision('EMAIL_ADDRESS', mode, 0.70)).toBe('UNCERTAIN')
+    it('should return REDACT for non-ambiguous types even with medium confidence', () => {
+      expect(getDefaultDecision('EMAIL_ADDRESS', mode, 0.70)).toBe('REDACT')
+    })
+
+    it('should return REDACT for ambiguous types with medium confidence', () => {
+      expect(getDefaultDecision('ORG', mode, 0.65)).toBe('REDACT')
+    })
+
+    it('should return REDACT at exactly DISCARD threshold (0.60)', () => {
+      expect(getDefaultDecision('US_SSN', mode, 0.60)).toBe('REDACT')
     })
 
     it('should return null (discard) when confidence is below threshold', () => {
       expect(getDefaultDecision('MONEY', mode, 0.50)).toBeNull()
+    })
+
+    it('should produce zero UNCERTAIN decisions for any entity type above discard', () => {
+      const types: EntityType[] = [
+        'US_SSN', 'US_ITIN', 'US_EIN', 'CREDIT_CARD', 'PHONE_NUMBER',
+        'EMAIL_ADDRESS', 'STREET_ADDRESS', 'CITY_STATE_ZIP', 'ADDRESS',
+        'ZIP_CODE', 'DATE_OF_BIRTH', 'BANK_ACCOUNT', 'ROUTING_NUMBER',
+        'MONEY', 'PERSON', 'ORG', 'PASSPORT',
+      ]
+      for (const t of types) {
+        for (const conf of [0.60, 0.70, 0.84, 0.85, 0.95, 0.99]) {
+          const decision = getDefaultDecision(t, mode, conf)
+          expect(decision).not.toBe('UNCERTAIN')
+        }
+      }
     })
   })
 
@@ -246,12 +269,18 @@ describe('getDefaultDecision', () => {
       expect(getDefaultDecision('MONEY', 'IDENTITY_ONLY', 0.50)).toBeNull()
     })
 
-    it('should return UNCERTAIN for ambiguous types regardless of confidence', () => {
-      // ORG and ZIP_CODE are always uncertain (above discard threshold)
+    it('should return UNCERTAIN for ambiguous types in identity mode regardless of confidence', () => {
+      // ORG and ZIP_CODE are always uncertain in identity mode (above discard threshold)
       expect(getDefaultDecision('ORG', 'IDENTITY_ONLY', 0.99)).toBe('UNCERTAIN')
-      expect(getDefaultDecision('ORG', 'FULL_REDACTION', 0.99)).toBe('UNCERTAIN')
       expect(getDefaultDecision('ZIP_CODE', 'IDENTITY_ONLY', 0.99)).toBe('UNCERTAIN')
-      expect(getDefaultDecision('ZIP_CODE', 'FULL_REDACTION', 0.99)).toBe('UNCERTAIN')
+    })
+
+    it('should return REDACT for ambiguous types in full redaction mode', () => {
+      // Full mode has zero UNCERTAIN items — everything is auto-redacted
+      expect(getDefaultDecision('ORG', 'FULL_REDACTION', 0.99)).toBe('REDACT')
+      expect(getDefaultDecision('ORG', 'FULL_REDACTION', 0.65)).toBe('REDACT')
+      expect(getDefaultDecision('ZIP_CODE', 'FULL_REDACTION', 0.99)).toBe('REDACT')
+      expect(getDefaultDecision('ZIP_CODE', 'FULL_REDACTION', 0.65)).toBe('REDACT')
     })
   })
 })
