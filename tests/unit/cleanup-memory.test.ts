@@ -384,3 +384,39 @@ describe('Reset callbacks', () => {
     expect(callback).not.toHaveBeenCalled()
   })
 })
+
+// ─── Cleanup console.log evidence (VAL-SEC-005) ───────────────────
+
+describe('Cleanup evidence logging', () => {
+  beforeEach(() => {
+    resetState()
+  })
+
+  it('should log cleanup confirmation message during resetState', () => {
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+
+    // Set up some state to clean
+    appState.value = 'DONE'
+    entities.value = [makeEntity()]
+
+    resetState()
+
+    expect(consoleSpy).toHaveBeenCalledWith(
+      'LocalRedact: cleanup complete — PDF destroyed, canvases released, URLs revoked, state reset'
+    )
+
+    consoleSpy.mockRestore()
+  })
+
+  it('should log cleanup even when no resources to clean', () => {
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+
+    resetState()
+
+    expect(consoleSpy).toHaveBeenCalledWith(
+      'LocalRedact: cleanup complete — PDF destroyed, canvases released, URLs revoked, state reset'
+    )
+
+    consoleSpy.mockRestore()
+  })
+})

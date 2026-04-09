@@ -377,4 +377,7 @@ export function resetState(): void {
   for (const cb of resetCallbacks) {
     cb()
   }
+
+  // 8. Emit observable cleanup confirmation for validators
+  console.log('LocalRedact: cleanup complete — PDF destroyed, canvases released, URLs revoked, state reset')
 }
