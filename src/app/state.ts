@@ -63,6 +63,9 @@ export const focusedEntity = signal<string | null>(null)
 /** Currently focused entity ID for keyboard nav and tooltip (null when no focus) */
 export const focusedEntityId = signal<string | null>(null)
 
+/** Stored password for encrypted PDFs (null when not encrypted or not yet entered) */
+export const pdfPassword = signal<string | null>(null)
+
 // ─── Computed signals ──────────────────────────────────────────────
 
 /** Count of entities with REDACT decision */
@@ -253,4 +256,5 @@ export function resetState(): void {
   indexedPages.value = []
   focusedEntity.value = null
   focusedEntityId.value = null
+  pdfPassword.value = null
 }
