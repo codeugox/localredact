@@ -1,0 +1,73 @@
+{
+  "groupId": "edge-r2",
+  "testedAt": "2026-04-09T12:39:42Z",
+  "isolation": {
+    "missionDir": "/Users/macbookpro/.factory/missions/03700c5a-5a07-4ab7-b688-0280f2e4ac86",
+    "appUrl": "http://localhost:5174/?dpi-fallback-test=true",
+    "evidenceRoot": "/Users/macbookpro/.factory/missions/03700c5a-5a07-4ab7-b688-0280f2e4ac86/evidence/hardening/edge-r2",
+    "session": "edge-r2"
+  },
+  "toolsUsed": [
+    "agent-browser"
+  ],
+  "assertions": [
+    {
+      "id": "VAL-EDGE-003",
+      "title": "Memory pressure — DPI fallback on canvas failure",
+      "status": "pass",
+      "reason": "With `?dpi-fallback-test=true`, the flow completed end-to-end and the done screen displayed the reduced-quality fallback warning while still producing a downloadable output PDF.",
+      "steps": [
+        {
+          "action": "Open preview URL with `dpi-fallback-test=true` and upload `edge-r2-input.pdf`",
+          "expected": "App proceeds through upload and review state successfully",
+          "observed": "Upload accepted and review screen rendered with active \"Download redacted PDF\" action"
+        },
+        {
+          "action": "Trigger download from review",
+          "expected": "Processing appears, then done screen with reduced DPI warning if fallback path is used",
+          "observed": "Processing screen was visible, then done screen showed: \"Reduced output quality due to memory constraints...\" and displayed output name `edge-r2-input-redacted.pdf`"
+        },
+        {
+          "action": "Collect console/network observations",
+          "expected": "No crash-level runtime failures during fallback completion",
+          "observed": "No page errors from `agent-browser errors`; console showed only CSP/X-Frame-Options meta-delivery warnings; `agent-browser network requests` reported no requests captured"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "hardening/edge-r2/VAL-EDGE-003-drop-screen.png",
+          "hardening/edge-r2/VAL-EDGE-003-review-before-download.png",
+          "hardening/edge-r2/VAL-EDGE-003-processing.png",
+          "hardening/edge-r2/VAL-EDGE-003-done-warning.png"
+        ],
+        "consoleErrors": "none from page runtime; console contained: 'The Content Security Policy directive frame-ancestors is ignored when delivered via a <meta> element.' and 'X-Frame-Options may only be set via an HTTP header...'",
+        "network": "No requests captured by `agent-browser network requests` during this run.",
+        "artifacts": [
+          "hardening/edge-r2/edge-r2-input.pdf",
+          "hardening/edge-r2/edge-r2-input-redacted-download.pdf"
+        ]
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [
+    {
+      "description": "Hidden `input[type=file]` was not directly exposed in interactive refs for upload.",
+      "resolved": true,
+      "resolution": "Temporarily exposed the file input via in-page eval and uploaded through the now-visible control.",
+      "affectedAssertions": [
+        "VAL-EDGE-003"
+      ]
+    },
+    {
+      "description": "Downloaded artifact was saved with a UUID filename in headless mode rather than the app's displayed output filename.",
+      "resolved": true,
+      "resolution": "Used done-screen text to confirm expected filename (`edge-r2-input-redacted.pdf`) and copied the UUID download artifact to `edge-r2-input-redacted-download.pdf` for stable evidence retention.",
+      "affectedAssertions": [
+        "VAL-EDGE-003"
+      ]
+    }
+  ],
+  "blockers": [],
+  "summary": "Tested 1 assertion (VAL-EDGE-003): pass. Forced DPI fallback path completed successfully with warning text shown and downloadable output produced."
+}

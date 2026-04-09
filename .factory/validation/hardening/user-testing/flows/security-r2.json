@@ -1,0 +1,123 @@
+{
+  "groupId": "security-r2",
+  "testedAt": "2026-04-09T12:42:57Z",
+  "isolation": {
+    "missionDir": "/Users/macbookpro/.factory/missions/03700c5a-5a07-4ab7-b688-0280f2e4ac86",
+    "appUrl": "http://localhost:5174",
+    "evidenceRoot": "/Users/macbookpro/.factory/missions/03700c5a-5a07-4ab7-b688-0280f2e4ac86/evidence/hardening/security-r2",
+    "assignedAssertions": [
+      "VAL-SEC-001",
+      "VAL-SEC-005"
+    ],
+    "browserSession": "security-r2"
+  },
+  "toolsUsed": [
+    "agent-browser",
+    "python3"
+  ],
+  "assertions": [
+    {
+      "id": "VAL-SEC-001",
+      "title": "No network requests during processing or interaction",
+      "status": "fail",
+      "reason": "CSP connect-src is correctly set to 'none', but 6 same-origin script/worker network requests were recorded after baseline during upload\u2192review\u2192download.",
+      "toolsUsed": [
+        "agent-browser"
+      ],
+      "steps": [
+        {
+          "action": "Open preview app on :5174, wait for initial load, and record baseline network requests",
+          "expected": "Baseline is clear before running flow",
+          "observed": "Baseline request log was empty (0 requests)."
+        },
+        {
+          "action": "Upload detect-008-no-pii.pdf, proceed to review, then click Download redacted PDF to Done screen",
+          "expected": "Complete full cycle with no additional network traffic",
+          "observed": "Flow completed to Done screen and a download artifact was produced."
+        },
+        {
+          "action": "Capture post-cycle network requests and inspect CSP meta connect-src",
+          "expected": "No requests after baseline and connect-src 'none'",
+          "observed": "connect-src was 'none', but post-cycle log contained 6 new GET requests (detect-document chunk, redact-document chunk, pdf.worker script)."
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "hardening/security-r2/VAL-SEC-001-before-upload.png",
+          "hardening/security-r2/VAL-SEC-001-review-before-download.png",
+          "hardening/security-r2/VAL-SEC-001-done-screen.png",
+          "hardening/security-r2/VAL-SEC-001-csp-overlay.png"
+        ],
+        "dom": [
+          "hardening/security-r2/VAL-SEC-001-csp.json"
+        ],
+        "network": [
+          "hardening/security-r2/VAL-SEC-001-network-baseline.json",
+          "hardening/security-r2/VAL-SEC-001-network-after.json",
+          "hardening/security-r2/VAL-SEC-001-network-delta.json"
+        ],
+        "consoleErrors": "none"
+      },
+      "issues": "Contract requires zero network requests after initial load; observed 6 same-origin script/worker requests during the cycle."
+    },
+    {
+      "id": "VAL-SEC-005",
+      "title": "Full cleanup on Start over \u2014 no residual data",
+      "status": "pass",
+      "reason": "Start over returned to drop screen, emitted explicit cleanup confirmation log, and a second upload processed cleanly with no residual highlights/data from the first file.",
+      "toolsUsed": [
+        "agent-browser"
+      ],
+      "steps": [
+        {
+          "action": "Upload first file (detect-001-all-entities.pdf) and reach review screen",
+          "expected": "Review state active before cleanup",
+          "observed": "Preview loaded successfully with review controls and highlights."
+        },
+        {
+          "action": "Click \u2190 Start over from review",
+          "expected": "Return to clean drop screen and perform cleanup",
+          "observed": "App returned to drop screen immediately."
+        },
+        {
+          "action": "Inspect console logs after Start over",
+          "expected": "Explicit cleanup confirmation log present",
+          "observed": "Console included: 'LocalRedact: cleanup complete \u2014 PDF destroyed, canvases released, URLs revoked, state reset'."
+        },
+        {
+          "action": "Upload second file (detect-008-no-pii.pdf) after reset",
+          "expected": "Second file processes without stale state",
+          "observed": "Second preview opened cleanly; structured check showed decisionNodes=0, svgRects=0, and no known prior value in body text."
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "hardening/security-r2/VAL-SEC-005-first-preview-before-reset.png",
+          "hardening/security-r2/VAL-SEC-005-drop-after-start-over.png",
+          "hardening/security-r2/VAL-SEC-005-second-preview-after-reset.png"
+        ],
+        "console": [
+          "hardening/security-r2/VAL-SEC-005-console-after-start-over.log"
+        ],
+        "dom": [
+          "hardening/security-r2/VAL-SEC-005-second-upload-check.json"
+        ],
+        "consoleErrors": "none"
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [
+    {
+      "description": "Hidden input[type=file] was not interactable by default in headless automation.",
+      "resolved": true,
+      "resolution": "Temporarily exposed the existing input via session-local DOM style updates, then used agent-browser upload.",
+      "affectedAssertions": [
+        "VAL-SEC-001",
+        "VAL-SEC-005"
+      ]
+    }
+  ],
+  "blockers": [],
+  "summary": "Tested 2 assertions: 1 passed (VAL-SEC-005), 1 failed (VAL-SEC-001)."
+}
