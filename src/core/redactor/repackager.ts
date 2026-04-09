@@ -5,6 +5,9 @@
 
 import { jsPDF } from 'jspdf'
 
+/** JPEG quality used when embedding page images into the output PDF (0–1). */
+export const JPEG_QUALITY = 0.92
+
 /**
  * Minimal viewport interface for extracting page dimensions at scale=1 (in pt).
  */
@@ -17,8 +20,8 @@ export interface PageViewport {
  * Assemble per-page canvases into a single output PDF.
  *
  * Uses jsPDF with unit='pt' so page dimensions match PDF coordinate space
- * exactly. Each canvas is embedded as a lossless PNG image filling the
- * entire page. Metadata is stripped to minimal values.
+ * exactly. Each canvas is embedded as a JPEG image (quality 0.92) filling
+ * the entire page. Metadata is stripped to minimal values.
  *
  * @param pageCanvases - Array of rendered canvas elements (one per page)
  * @param pageViewports - Array of viewports at scale=1 (dimensions in pt)
@@ -52,16 +55,8 @@ export function repackage(
       doc.addPage([vp.width, vp.height])
     }
 
-    doc.addImage(
-      pageCanvases[i],
-      'PNG',
-      0,
-      0,
-      vp.width,
-      vp.height,
-      `page-${i}`,
-      'NONE'
-    )
+    const jpegDataUrl = pageCanvases[i].toDataURL('image/jpeg', JPEG_QUALITY)
+    doc.addImage(jpegDataUrl, 'JPEG', 0, 0, vp.width, vp.height, `page-${i}`)
   }
 
   // Strip metadata to minimal values
@@ -117,16 +112,8 @@ export function addPageToDoc(
     doc.addPage([viewport.width, viewport.height])
   }
 
-  doc.addImage(
-    canvas,
-    'PNG',
-    0,
-    0,
-    viewport.width,
-    viewport.height,
-    `page-${pageIndex}`,
-    'NONE'
-  )
+  const jpegDataUrl = canvas.toDataURL('image/jpeg', JPEG_QUALITY)
+  doc.addImage(jpegDataUrl, 'JPEG', 0, 0, viewport.width, viewport.height, `page-${pageIndex}`)
 }
 
 /**

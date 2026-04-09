@@ -556,6 +556,98 @@ describe('detectPipeline', () => {
     })
   })
 
+  describe('person name detection (context-sensitive)', () => {
+    it('should detect labeled name "Patient: Emily Chen"', () => {
+      const items: TextItem[] = [
+        makeTextItem('Patient: ', 72, 720, 48),
+        makeTextItem('Emily Chen', 120, 720, 60),
+      ]
+      const pages = [{ items, viewport: LETTER_VIEWPORT }]
+      const result = detectPipeline(pages, 'IDENTITY_ONLY')
+
+      const person = result.entities.find((e) => e.type === 'PERSON')
+      expect(person).toBeDefined()
+      expect(person!.text).toContain('Emily Chen')
+      expect(person!.confidence).toBeGreaterThanOrEqual(0.85)
+      expect(person!.decision).toBe('REDACT')
+    })
+
+    it('should detect labeled name "Name: Sarah Mitchell"', () => {
+      const items: TextItem[] = [
+        makeTextItem('Name: Sarah Mitchell', 72, 720, 120),
+      ]
+      const pages = [{ items, viewport: LETTER_VIEWPORT }]
+      const result = detectPipeline(pages, 'IDENTITY_ONLY')
+
+      const person = result.entities.find((e) => e.type === 'PERSON')
+      expect(person).toBeDefined()
+      expect(person!.text).toContain('Sarah Mitchell')
+    })
+
+    it('should detect labeled name "Emergency Contact: John O\'Brien"', () => {
+      const items: TextItem[] = [
+        makeTextItem("Emergency Contact: John O'Brien", 72, 720, 180),
+      ]
+      const pages = [{ items, viewport: LETTER_VIEWPORT }]
+      const result = detectPipeline(pages, 'IDENTITY_ONLY')
+
+      const person = result.entities.find((e) => e.type === 'PERSON')
+      expect(person).toBeDefined()
+      expect(person!.text).toContain("O'Brien")
+    })
+
+    it('should detect labeled name "Physician: Dr. Robert Martinez"', () => {
+      const items: TextItem[] = [
+        makeTextItem('Physician: Dr. Robert Martinez', 72, 720, 180),
+      ]
+      const pages = [{ items, viewport: LETTER_VIEWPORT }]
+      const result = detectPipeline(pages, 'IDENTITY_ONLY')
+
+      const person = result.entities.find(
+        (e) => e.type === 'PERSON' && e.text.includes('Martinez')
+      )
+      expect(person).toBeDefined()
+    })
+
+    it('should NOT detect "Portland" as person name (no label)', () => {
+      const items: TextItem[] = [
+        makeTextItem('The city of Portland is beautiful.', 72, 720, 200),
+      ]
+      const pages = [{ items, viewport: LETTER_VIEWPORT }]
+      const result = detectPipeline(pages, 'IDENTITY_ONLY')
+
+      const person = result.entities.find(
+        (e) => e.type === 'PERSON' && e.text.includes('Portland')
+      )
+      expect(person).toBeUndefined()
+    })
+
+    it('should NOT detect "Northwest Digital Solutions" as person name (no label)', () => {
+      const items: TextItem[] = [
+        makeTextItem('Northwest Digital Solutions is a tech company.', 72, 720, 260),
+      ]
+      const pages = [{ items, viewport: LETTER_VIEWPORT }]
+      const result = detectPipeline(pages, 'IDENTITY_ONLY')
+
+      const person = result.entities.find(
+        (e) => e.type === 'PERSON' && e.text.includes('Northwest')
+      )
+      expect(person).toBeUndefined()
+    })
+
+    it('should REDACT person name in full redaction mode when labeled', () => {
+      const items: TextItem[] = [
+        makeTextItem('Patient: Emily Chen', 72, 720, 120),
+      ]
+      const pages = [{ items, viewport: LETTER_VIEWPORT }]
+      const result = detectPipeline(pages, 'FULL_REDACTION')
+
+      const person = result.entities.find((e) => e.type === 'PERSON')
+      expect(person).toBeDefined()
+      expect(person!.decision).toBe('REDACT')
+    })
+  })
+
   describe('credit card Luhn filtering', () => {
     it('should reject credit card numbers that fail Luhn', () => {
       const items: TextItem[] = [
