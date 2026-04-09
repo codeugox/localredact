@@ -230,3 +230,69 @@ describe('Memory pressure DPI fallback', () => {
     dpiFallbackWarning.value = null
   })
 })
+
+// ─── 5. DPI fallback test mechanism (VAL-EDGE-003) ─────────────────
+
+describe('DPI fallback test mechanism via URL parameter', () => {
+  afterEach(async () => {
+    // Reset test state after each test
+    const { resetDpiFallbackTestState } = await import(
+      '../../src/core/redactor/rasterizer'
+    )
+    resetDpiFallbackTestState()
+  })
+
+  it('should export isDpiFallbackTestEnabled function', async () => {
+    const { isDpiFallbackTestEnabled } = await import(
+      '../../src/core/redactor/rasterizer'
+    )
+    expect(typeof isDpiFallbackTestEnabled).toBe('function')
+  })
+
+  it('isDpiFallbackTestEnabled should return false when URL param is not present', async () => {
+    const { isDpiFallbackTestEnabled } = await import(
+      '../../src/core/redactor/rasterizer'
+    )
+    // jsdom default location has no search params
+    expect(isDpiFallbackTestEnabled()).toBe(false)
+  })
+
+  it('isDpiFallbackTestEnabled should return true when ?dpi-fallback-test=true is in URL', async () => {
+    const { isDpiFallbackTestEnabled } = await import(
+      '../../src/core/redactor/rasterizer'
+    )
+
+    // Set URL param in jsdom
+    const originalHref = window.location.href
+    Object.defineProperty(window, 'location', {
+      value: new URL('http://localhost:5173/?dpi-fallback-test=true'),
+      writable: true,
+    })
+
+    expect(isDpiFallbackTestEnabled()).toBe(true)
+
+    // Restore
+    Object.defineProperty(window, 'location', {
+      value: new URL(originalHref || 'http://localhost:5173/'),
+      writable: true,
+    })
+  })
+
+  it('should export resetDpiFallbackTestState for test cleanup', async () => {
+    const { resetDpiFallbackTestState } = await import(
+      '../../src/core/redactor/rasterizer'
+    )
+    expect(typeof resetDpiFallbackTestState).toBe('function')
+    // Should not throw
+    expect(() => resetDpiFallbackTestState()).not.toThrow()
+  })
+
+  it('DPI_FALLBACK_WARNING should contain the expected warning text', async () => {
+    const { DPI_FALLBACK_WARNING } = await import(
+      '../../src/core/pipeline/redact-document'
+    )
+    expect(DPI_FALLBACK_WARNING).toContain(
+      'Reduced output quality due to memory constraints. The redaction is still complete and irreversible.'
+    )
+  })
+})

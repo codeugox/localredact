@@ -187,6 +187,28 @@ describe('Security Hardening — No External Resources', () => {
   })
 })
 
+describe('Security Hardening — Vite Dev CSP Plugin', () => {
+  it('dev CSP plugin should only relax connect-src, not remove other directives', async () => {
+    // Read vite.config.ts to verify the dev CSP replacement pattern
+    const viteConfig = readFileSync(join(ROOT, 'vite.config.ts'), 'utf-8')
+
+    // The dev mode CSP replacement should still include all security directives
+    expect(viteConfig).toContain("object-src 'none'")
+    expect(viteConfig).toContain("base-uri 'none'")
+    expect(viteConfig).toContain("frame-ancestors 'none'")
+
+    // The dev replacement should add ws: for HMR but not wildcard everything
+    expect(viteConfig).toContain('connect-src ws:')
+    // Should NOT have the old overly-permissive default-src
+    expect(viteConfig).not.toContain("default-src 'self' 'unsafe-inline' 'unsafe-eval' blob: data:")
+  })
+
+  it('production CSP in index.html should have connect-src none', () => {
+    const html = readFileSync(INDEX_HTML, 'utf-8')
+    expect(html).toMatch(/connect-src\s+'none'/)
+  })
+})
+
 describe('Security Hardening — Font Stack', () => {
   const cssFile = join(SRC, 'styles', 'app.css')
   const css = readFileSync(cssFile, 'utf-8')

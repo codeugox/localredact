@@ -5,6 +5,11 @@ import preact from '@preact/preset-vite'
  * In dev mode, Vite injects inline scripts for HMR and module loading.
  * The strict production CSP (`script-src 'self'`) would block those.
  * This plugin relaxes the CSP during development only.
+ *
+ * Key design: only relax what's strictly needed for HMR:
+ * - script-src adds 'unsafe-inline' and 'unsafe-eval' for Vite's module loading
+ * - connect-src changes from 'none' to 'ws: http://localhost:*' for HMR websocket
+ * All other directives remain unchanged from the production CSP.
  */
 function devCspPlugin(): Plugin {
   return {
@@ -13,10 +18,13 @@ function devCspPlugin(): Plugin {
       order: 'pre',
       handler(html, ctx) {
         if (ctx.server) {
-          // Dev mode: relax CSP for Vite HMR inline scripts and WebSocket
+          // Dev mode: relax CSP minimally for Vite HMR
+          // - script-src: add 'unsafe-inline' 'unsafe-eval' for Vite module loading
+          // - connect-src: change 'none' → 'ws: http://localhost:*' for HMR websocket only
+          // All other directives (object-src, base-uri, frame-ancestors, etc.) stay strict
           return html.replace(
             /content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; connect-src 'none'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; worker-src 'self' blob:"/,
-            `content="default-src 'self' 'unsafe-inline' 'unsafe-eval' blob: data:; connect-src ws://localhost:* http://localhost:*; worker-src 'self' blob:"`
+            `content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; connect-src ws: http://localhost:*; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; worker-src 'self' blob:"`
           )
         }
         return html
