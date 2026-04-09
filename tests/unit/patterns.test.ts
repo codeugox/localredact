@@ -13,6 +13,7 @@ import {
   CITY_STATE_ZIP,
   ZIP_VALUE,
   ZIP_CONTEXT,
+  ZIP_STATE_CONTEXT,
   DOB_NUMERIC,
   DOB_WRITTEN,
   DOB_CONTEXT,
@@ -391,10 +392,37 @@ describe('ZIP_CODE', () => {
     expect(hasMatch(ZIP_VALUE, '43201-1234')).toBe(true)
   })
 
-  it('should have context regex matching ZIP labels', () => {
+  it('should have context regex matching explicit ZIP labels', () => {
     expect(hasMatch(ZIP_CONTEXT, 'ZIP')).toBe(true)
     expect(hasMatch(ZIP_CONTEXT, 'zip code')).toBe(true)
-    expect(hasMatch(ZIP_CONTEXT, 'OH')).toBe(true) // state abbreviation
+    expect(hasMatch(ZIP_CONTEXT, 'Zip Code')).toBe(true)
+    expect(hasMatch(ZIP_CONTEXT, 'zip:')).toBe(true)
+    expect(hasMatch(ZIP_CONTEXT, 'ZIP:')).toBe(true)
+  })
+
+  it('should NOT have ZIP_CONTEXT match common lowercase words', () => {
+    // These are common English words that happen to be 2-letter state abbreviations
+    expect(hasMatch(ZIP_CONTEXT, 'in')).toBe(false)
+    expect(hasMatch(ZIP_CONTEXT, 'or')).toBe(false)
+    expect(hasMatch(ZIP_CONTEXT, 'me')).toBe(false)
+  })
+
+  it('should have state context regex matching uppercase state codes', () => {
+    expect(hasMatch(ZIP_STATE_CONTEXT, 'OH')).toBe(true)
+    expect(hasMatch(ZIP_STATE_CONTEXT, 'CA')).toBe(true)
+    expect(hasMatch(ZIP_STATE_CONTEXT, 'NY')).toBe(true)
+    expect(hasMatch(ZIP_STATE_CONTEXT, 'TX')).toBe(true)
+    expect(hasMatch(ZIP_STATE_CONTEXT, 'IN')).toBe(true)
+  })
+
+  it('should NOT have state context match lowercase words', () => {
+    // Lowercase "in", "or", "me" should NOT match state codes
+    expect(hasMatch(ZIP_STATE_CONTEXT, 'in')).toBe(false)
+    expect(hasMatch(ZIP_STATE_CONTEXT, 'or')).toBe(false)
+    expect(hasMatch(ZIP_STATE_CONTEXT, 'me')).toBe(false)
+    expect(hasMatch(ZIP_STATE_CONTEXT, 'oh')).toBe(false)
+    expect(hasMatch(ZIP_STATE_CONTEXT, 'id')).toBe(false)
+    expect(hasMatch(ZIP_STATE_CONTEXT, 'hi')).toBe(false)
   })
 })
 
@@ -588,10 +616,34 @@ describe('scoreContext', () => {
     expect(scoreContext(text, matchStart, PASSPORT_CONTEXT)).toBe(true)
   })
 
-  it('should work with ZIP context (state abbreviation)', () => {
-    const text = 'OH 43201'
+  it('should work with ZIP context (explicit ZIP label)', () => {
+    const text = 'ZIP: 43201'
     const matchStart = text.indexOf('43201')
     expect(scoreContext(text, matchStart, ZIP_CONTEXT)).toBe(true)
+  })
+
+  it('should work with ZIP state context (uppercase state abbreviation)', () => {
+    const text = 'OH 43201'
+    const matchStart = text.indexOf('43201')
+    expect(scoreContext(text, matchStart, ZIP_STATE_CONTEXT)).toBe(true)
+  })
+
+  it('should NOT match lowercase "in" as ZIP state context', () => {
+    const text = 'lives in 43201 area'
+    const matchStart = text.indexOf('43201')
+    expect(scoreContext(text, matchStart, ZIP_STATE_CONTEXT)).toBe(false)
+  })
+
+  it('should NOT match lowercase "or" as ZIP state context', () => {
+    const text = 'this or 97201 that'
+    const matchStart = text.indexOf('97201')
+    expect(scoreContext(text, matchStart, ZIP_STATE_CONTEXT)).toBe(false)
+  })
+
+  it('should NOT match lowercase "me" as ZIP state context', () => {
+    const text = 'give me 04101 please'
+    const matchStart = text.indexOf('04101')
+    expect(scoreContext(text, matchStart, ZIP_STATE_CONTEXT)).toBe(false)
   })
 })
 

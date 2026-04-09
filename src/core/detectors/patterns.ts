@@ -123,9 +123,22 @@ export const CITY_STATE_ZIP =
 export const ZIP_VALUE =
   /\b\d{5}(?:-\d{4})?\b/g
 
-/** ZIP context: ZIP label or adjacent state abbreviation */
+/**
+ * ZIP context: explicit ZIP labels only (case-insensitive).
+ * Matches "ZIP", "ZIP code", "Zip Code:", "zip:", etc.
+ * Does NOT include state abbreviations — those are handled by
+ * ZIP_STATE_CONTEXT (case-sensitive) to avoid false positives.
+ */
 export const ZIP_CONTEXT =
-  /(?:ZIP(?:\s*code)?|AL|AK|AZ|AR|CA|CO|CT|DE|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|ME|MD|MA|MI|MN|MS|MO|MT|NE|NV|NH|NJ|NM|NY|NC|ND|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY)\b/gi
+  /(?:zip\s*code|zip)\b:?/gi
+
+/**
+ * ZIP context: uppercase two-letter US state abbreviations.
+ * Case-sensitive (no /i flag) — requires exact uppercase match
+ * with word boundaries to avoid matching lowercase words.
+ */
+export const ZIP_STATE_CONTEXT =
+  /\b(?:AL|AK|AZ|AR|CA|CO|CT|DE|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|ME|MD|MA|MI|MN|MS|MO|MT|NE|NV|NH|NJ|NM|NY|NC|ND|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY)\b/g
 
 // ──────────────────────────────────────────────────
 // DATE_OF_BIRTH (context-sensitive)
