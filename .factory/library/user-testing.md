@@ -21,7 +21,9 @@ Navigate to http://localhost:5173. The drop screen loads immediately — no logi
 - Non-PDF files (.txt, .jpg) for rejection testing
 - PDF with scanned images only (no text layer) for edge case testing
 
-Workers should create test fixture PDFs programmatically or include minimal test PDFs in `/tests/fixtures/`.
+Pre-built test fixture PDFs are available at `tests/fixtures/*.pdf`. Validators MUST use these fixtures instead of creating PDFs on-the-fly. The fixtures are designed with precise spacing to test context-sensitive detection correctly.
+
+**CRITICAL for context-sensitive assertions (VAL-DETECT-007, VAL-DETECT-011):** These fixtures place labeled and unlabeled values on SEPARATE PAGES to prevent context label bleed. Do NOT create single-page fixtures for these assertions — the 80-char context lookbehind window will cause false positives if both values are on the same page.
 
 ### Key Flows to Test
 1. Drop file → processing → preview → review → download → done
