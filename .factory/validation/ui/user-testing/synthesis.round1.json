@@ -1,0 +1,97 @@
+{
+  "milestone": "ui",
+  "round": 1,
+  "status": "fail",
+  "assertionsSummary": {
+    "total": 53,
+    "passed": 48,
+    "failed": 5,
+    "blocked": 0
+  },
+  "passedAssertions": [
+    "VAL-CROSS-001",
+    "VAL-CROSS-002",
+    "VAL-CROSS-003",
+    "VAL-CROSS-004",
+    "VAL-CROSS-005",
+    "VAL-CROSS-006",
+    "VAL-CROSS-007",
+    "VAL-CROSS-008",
+    "VAL-DETECT-001",
+    "VAL-DETECT-002",
+    "VAL-DETECT-003",
+    "VAL-DETECT-004",
+    "VAL-DETECT-006",
+    "VAL-DETECT-008",
+    "VAL-DETECT-010",
+    "VAL-DROP-001",
+    "VAL-DROP-002",
+    "VAL-DROP-003",
+    "VAL-DROP-004",
+    "VAL-DROP-005",
+    "VAL-DROP-006",
+    "VAL-DROP-007",
+    "VAL-DROP-008",
+    "VAL-DROP-009",
+    "VAL-OUT-001",
+    "VAL-OUT-002",
+    "VAL-OUT-003",
+    "VAL-OUT-004",
+    "VAL-OUT-005",
+    "VAL-OUT-006",
+    "VAL-OUT-007",
+    "VAL-OUT-008",
+    "VAL-OUT-009",
+    "VAL-PREV-001",
+    "VAL-PREV-002",
+    "VAL-PREV-003",
+    "VAL-PREV-004",
+    "VAL-PREV-005",
+    "VAL-PREV-006",
+    "VAL-PREV-007",
+    "VAL-PREV-008",
+    "VAL-PREV-009",
+    "VAL-PREV-010",
+    "VAL-PREV-011",
+    "VAL-PREV-012",
+    "VAL-PREV-013",
+    "VAL-PREV-014",
+    "VAL-PREV-015"
+  ],
+  "failedAssertions": [
+    {
+      "id": "VAL-DETECT-005",
+      "reason": "Invalid Luhn number was still highlighted (as UNCERTAIN), so the valid number was not the only highlighted number."
+    },
+    {
+      "id": "VAL-DETECT-007",
+      "reason": "Unlabeled EIN did not produce UNCERTAIN highlight."
+    },
+    {
+      "id": "VAL-DETECT-009",
+      "reason": "Sidebar occurrence count did not match the two visible SSN occurrences."
+    },
+    {
+      "id": "VAL-DETECT-011",
+      "reason": "Standalone unlabeled account number was highlighted."
+    },
+    {
+      "id": "VAL-DETECT-012",
+      "reason": "Address was not treated as a single multi-line entity."
+    }
+  ],
+  "blockedAssertions": [],
+  "appliedUpdates": [
+    {
+      "target": "user-testing.md",
+      "description": "Added \"Flow Validator Guidance: agent-browser\" section with isolation and evidence boundaries for subagents.",
+      "source": "setup"
+    },
+    {
+      "target": "user-testing.md",
+      "description": "Added automation notes from flow reports (hidden file input usage, download-path behavior, and artifact-side PDF verification in headless mode).",
+      "source": "flow-report"
+    }
+  ],
+  "previousRound": null
+}
