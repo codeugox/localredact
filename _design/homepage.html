@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LocalRedact</title>
+  <style>
+
+    /* ─────────────────────────────────────────────────────
+       SYSTEM FONT STACK
+       San Francisco on Mac · Segoe UI Variable on Windows
+       Ubuntu/Noto on Linux · All excellent at every weight.
+       Zero network requests. Renders native on every device.
+    ───────────────────────────────────────────────────── */
+    :root {
+      --font-ui:   -apple-system, BlinkMacSystemFont, "Segoe UI Variable", "Segoe UI",
+                   system-ui, ui-sans-serif, sans-serif;
+      --font-mono: ui-monospace, "SF Mono", "Cascadia Code", "Cascadia Mono",
+                   "Roboto Mono", Menlo, Monaco, Consolas, monospace;
+
+      /* ── Warm neutral palette ──────────────────────── */
+      --bg:        #F4F1EC;
+      --surface:   #FFFFFF;
+      --overlay:   #FDFCFA;
+
+      --950:       #1C1812;
+      --700:       #4A4439;
+      --500:       #7B7368;
+      --400:       #9A9186;
+      --300:       #B5AFA8;
+      --200:       #D8D3CB;
+      --150:       #E5E1DA;
+      --100:       #EDEAE4;
+
+      --red:       #C41E1E;
+      --red-hover: #A81818;
+      --red-dim:   rgba(196,30,30,0.10);
+      --red-soft:  #FBF2F2;
+      --red-border:rgba(196,30,30,0.22);
+
+      --green:     #1B6E3C;
+      --green-soft:#F0F7F3;
+
+      /* ── Geometry ───────────────────────────────────── */
+      --r-sm:  5px;
+      --r-md:  9px;
+      --r-lg:  12px;
+
+      --shadow-card:
+        0 1px 2px rgba(28,24,18,0.06),
+        0 4px 16px rgba(28,24,18,0.06);
+
+      --shadow-drop:
+        0 2px 8px rgba(28,24,18,0.08),
+        0 1px 2px rgba(28,24,18,0.05);
+    }
+
+    /* ── Reset ─────────────────────────────────────────── */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html { height: 100%; }
+
+    body {
+      background: var(--bg);
+      color: var(--950);
+      font-family: var(--font-ui);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* ── NAV ────────────────────────────────────────────── */
+    nav {
+      height: 54px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 44px;
+      border-bottom: 1px solid var(--150);
+      background: var(--bg);
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    /* Logo mark — inline SVG, no font required */
+    .mark { width: 20px; height: 26px; flex-shrink: 0; }
+
+    .wordmark {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: var(--950);
+      line-height: 1;
+    }
+
+    .wordmark-redact { color: var(--red); }
+
+    .nav-end {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .nav-link {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--400);
+      text-decoration: none;
+      letter-spacing: -0.01em;
+      transition: color 0.15s;
+    }
+
+    .nav-link:hover { color: var(--950); }
+
+    .nav-pill {
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      font-weight: 500;
+      color: var(--300);
+      background: var(--surface);
+      border: 1px solid var(--150);
+      padding: 3px 10px;
+      border-radius: 20px;
+      letter-spacing: 0.02em;
+    }
+
+    /* ── MAIN ───────────────────────────────────────────── */
+    main {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 52px 40px 72px;
+    }
+
+    .wrap {
+      width: 100%;
+      max-width: 488px;
+      animation: rise 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0);     }
+    }
+
+    /* ── HEADLINE ───────────────────────────────────────── */
+    .headline {
+      margin-bottom: 32px;
+    }
+
+    h1 {
+      font-size: clamp(40px, 5.5vw, 60px);
+      font-weight: 700;
+      line-height: 1.01;
+      letter-spacing: -0.04em;
+      color: var(--950);
+      margin-bottom: 16px;
+    }
+
+    /* The red underbar beneath "share." — the redaction motif,
+       used once, structurally, not decoratively */
+    .u {
+      position: relative;
+      display: inline;
+    }
+
+    .u::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 1px;
+      height: 3px;
+      background: var(--red);
+      border-radius: 1.5px;
+    }
+
+    .sub {
+      font-size: 15px;
+      font-weight: 400;
+      line-height: 1.62;
+      letter-spacing: -0.015em;
+      color: var(--500);
+      max-width: 390px;
+    }
+
+    /* ── DROP ZONE ──────────────────────────────────────── */
+    .drop {
+      background: var(--surface);
+      border: 1.5px solid var(--150);
+      border-radius: var(--r-lg);
+      padding: 36px 32px 32px;
+      text-align: center;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition:
+        border-color  0.2s ease,
+        background    0.2s ease,
+        box-shadow    0.2s ease;
+      margin-bottom: 8px;
+    }
+
+    /* Precise corner brackets — architectural, not decorative.
+       They define the boundary of the action zone. */
+    .drop::before,
+    .drop::after {
+      content: '';
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      border-color: var(--200);
+      border-style: solid;
+      transition: border-color 0.2s ease;
+      pointer-events: none;
+    }
+
+    .drop::before {
+      top: 9px; left: 9px;
+      border-width: 1.5px 0 0 1.5px;
+    }
+
+    .drop::after {
+      bottom: 9px; right: 9px;
+      border-width: 0 1.5px 1.5px 0;
+    }
+
+    .drop:hover,
+    .drop.over {
+      border-color: var(--red);
+      background: var(--red-soft);
+      box-shadow: var(--shadow-drop),
+                  0 0 0 3px rgba(196,30,30,0.06);
+    }
+
+    .drop:hover::before,
+    .drop:hover::after,
+    .drop.over::before,
+    .drop.over::after {
+      border-color: var(--red-border);
+    }
+
+    .drop-icon {
+      display: block;
+      margin: 0 auto 14px;
+      width: 40px;
+      height: 40px;
+    }
+
+    .drop-label {
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: -0.025em;
+      color: var(--950);
+      margin-bottom: 5px;
+    }
+
+    .drop-hint {
+      font-size: 13px;
+      font-weight: 400;
+      color: var(--400);
+      letter-spacing: -0.01em;
+      margin-bottom: 20px;
+    }
+
+    .drop-hint a {
+      color: var(--red);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      text-decoration-thickness: 1px;
+      cursor: pointer;
+    }
+
+    .drop-rule {
+      height: 1px;
+      background: var(--100);
+      margin: 0 -32px 18px;
+    }
+
+    .drop-spec {
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      font-weight: 400;
+      color: var(--300);
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+    }
+
+    /* ── MODE ───────────────────────────────────────────── */
+    .modes {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin-bottom: 22px;
+    }
+
+    .mode {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 11px 14px;
+      border-radius: var(--r-md);
+      border: 1.5px solid var(--150);
+      background: var(--surface);
+      cursor: pointer;
+      font-family: var(--font-ui);
+      text-align: left;
+      transition: all 0.15s ease;
+    }
+
+    .mode:hover { border-color: var(--200); background: var(--100); }
+
+    .mode.active {
+      border-color: var(--red-border);
+      background: var(--red-soft);
+    }
+
+    .radio {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      border: 1.5px solid var(--200);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: border-color 0.15s ease;
+    }
+
+    .mode.active .radio { border-color: var(--red); }
+
+    .mode.active .radio::after {
+      content: '';
+      display: block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--red);
+    }
+
+    .mode-copy {}
+
+    .mode-name {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: -0.025em;
+      color: var(--950);
+      line-height: 1;
+      margin-bottom: 3px;
+    }
+
+    .mode-desc {
+      font-size: 10.5px;
+      font-weight: 400;
+      color: var(--400);
+      line-height: 1;
+    }
+
+    /* ── TRUST ──────────────────────────────────────────── */
+    .trust {
+      text-align: center;
+      font-size: 12px;
+      font-weight: 400;
+      color: var(--300);
+      letter-spacing: -0.01em;
+      line-height: 1.55;
+    }
+
+    .trust strong {
+      font-weight: 600;
+      color: var(--500);
+    }
+
+    .trust code {
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      background: var(--100);
+      border: 1px solid var(--150);
+      padding: 1px 5px;
+      border-radius: 3px;
+      color: var(--400);
+    }
+
+    /* ── FOOTER ─────────────────────────────────────────── */
+    footer {
+      border-top: 1px solid var(--150);
+      padding: 14px 44px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .footer-l {
+      font-size: 11px;
+      font-weight: 400;
+      color: var(--300);
+      letter-spacing: -0.01em;
+    }
+
+    .footer-r {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .footer-link {
+      font-size: 11px;
+      font-weight: 400;
+      color: var(--300);
+      text-decoration: none;
+      letter-spacing: -0.01em;
+    }
+
+    .footer-link:hover { color: var(--500); }
+
+  </style>
+</head>
+<body>
+
+  <!-- ── NAV ───────────────────────────────────────────── -->
+  <nav>
+    <a class="logo" href="#">
+      <svg class="mark" viewBox="0 0 20 26" fill="none" aria-hidden="true">
+        <!-- Document outline -->
+        <rect x="0.75" y="0.75" width="18.5" height="24.5" rx="2"
+          fill="white" stroke="#D8D3CB" stroke-width="1.5"/>
+        <!-- Folded corner -->
+        <path d="M13.5 0.75 V6.25 H19" fill="#EDEAE4"
+          stroke="#D8D3CB" stroke-width="1.5" stroke-linejoin="round"/>
+        <!-- Lines above the bar -->
+        <rect x="3.5" y="3"   width="7"  height="1.5" rx="0.75" fill="#D8D3CB"/>
+        <rect x="3.5" y="6.5" width="10" height="1.5" rx="0.75" fill="#D8D3CB"/>
+        <!-- The redaction bar. Black. Full width. No softening. -->
+        <rect x="0.75" y="11" width="18.5" height="5.5" fill="#1C1812"/>
+        <!-- Lines below the bar -->
+        <rect x="3.5" y="19.5" width="9"  height="1.5" rx="0.75" fill="#D8D3CB"/>
+        <rect x="3.5" y="22.5" width="6"  height="1.5" rx="0.75" fill="#D8D3CB"/>
+      </svg>
+      <span class="wordmark">
+        local<span class="wordmark-redact">redact</span>
+      </span>
+    </a>
+
+    <div class="nav-end">
+      <a class="nav-link" href="#">GitHub ↗</a>
+      <span class="nav-pill">v1.0</span>
+    </div>
+  </nav>
+
+  <!-- ── MAIN ──────────────────────────────────────────── -->
+  <main>
+    <div class="wrap">
+
+      <!-- Headline -->
+      <div class="headline">
+        <h1>Redact before<br>you <span class="u">share.</span></h1>
+        <p class="sub">
+          Drop a PDF. Remove the parts that
+          shouldn't travel with it — names, SSNs,
+          account numbers. Download a clean version.
+          Nothing leaves your browser.
+        </p>
+      </div>
+
+      <!-- Drop zone -->
+      <div class="drop" id="dz">
+        <!-- Document + redaction mark icon -->
+        <svg class="drop-icon" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+          <rect x="6" y="2" width="22" height="28" rx="2.5"
+            fill="#F4F1EC" stroke="#D8D3CB" stroke-width="1.5"/>
+          <path d="M20 2 V8.5 H28" fill="#EDEAE4"
+            stroke="#D8D3CB" stroke-width="1.5" stroke-linejoin="round"/>
+          <!-- Black bar on the doc icon -->
+          <rect x="6" y="14" width="22" height="5.5" fill="#1C1812"/>
+          <!-- Subtle text lines -->
+          <rect x="9.5" y="22.5" width="10" height="1.5" rx="0.75" fill="#D8D3CB"/>
+          <rect x="9.5" y="25.5" width="7"  height="1.5" rx="0.75" fill="#D8D3CB"/>
+          <!-- Down arrow — the action affordance -->
+          <circle cx="32" cy="32" r="7" fill="white" stroke="#E5E1DA" stroke-width="1.5"/>
+          <path d="M32 27.5 L32 35.5 M29 32.5 L32 35.5 L35 32.5"
+            stroke="#C41E1E" stroke-width="1.5"
+            stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+
+        <div class="drop-label">Drop a PDF here</div>
+        <div class="drop-hint">or <a id="browse">browse your files</a></div>
+
+        <div class="drop-rule"></div>
+        <div class="drop-spec">PDF &nbsp;·&nbsp; max 50 mb</div>
+      </div>
+
+      <!-- Mode selector -->
+      <div class="modes">
+        <button class="mode active" data-mode="identity">
+          <div class="radio"></div>
+          <div class="mode-copy">
+            <div class="mode-name">Identity only</div>
+            <div class="mode-desc">Keeps dollar amounts</div>
+          </div>
+        </button>
+        <button class="mode" data-mode="full">
+          <div class="radio"></div>
+          <div class="mode-copy">
+            <div class="mode-name">Full redaction</div>
+            <div class="mode-desc">Removes everything</div>
+          </div>
+        </button>
+      </div>
+
+      <!-- Trust statement — once, here, no more -->
+      <p class="trust">
+        <strong>Zero bytes transmitted.</strong>
+        Runs in your tab. Open <code>DevTools → Network</code> to confirm.
+      </p>
+
+    </div>
+  </main>
+
+  <!-- ── FOOTER ────────────────────────────────────────── -->
+  <footer>
+    <span class="footer-l">localredact.app &nbsp;·&nbsp; MIT</span>
+    <div class="footer-r">
+      <a class="footer-link" href="#">Source</a>
+      <a class="footer-link" href="#">How it works</a>
+    </div>
+  </footer>
+
+  <script>
+    // Mode selection
+    document.querySelectorAll('.mode').forEach(m => {
+      m.addEventListener('click', () => {
+        document.querySelectorAll('.mode').forEach(n => n.classList.remove('active'));
+        m.classList.add('active');
+      });
+    });
+
+    // Drop zone interactions
+    const dz = document.getElementById('dz');
+    const input = (() => {
+      const el = document.createElement('input');
+      el.type = 'file';
+      el.accept = '.pdf';
+      return el;
+    })();
+
+    dz.addEventListener('click', () => input.click());
+    document.getElementById('browse').addEventListener('click', e => {
+      e.stopPropagation();
+      input.click();
+    });
+
+    ['dragenter','dragover'].forEach(ev =>
+      document.addEventListener(ev, e => { e.preventDefault(); dz.classList.add('over'); })
+    );
+    ['dragleave','drop'].forEach(ev =>
+      document.addEventListener(ev, e => {
+        if (ev === 'dragleave' && e.relatedTarget) return;
+        e.preventDefault();
+        dz.classList.remove('over');
+      })
+    );
+  </script>
+
+</body>
+</html>

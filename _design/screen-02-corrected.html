@@ -1,0 +1,1473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LocalRedact — Review & Redact</title>
+  <!--
+    ═══════════════════════════════════════════════════════════════
+    CODING AGENT REFERENCE — SCREEN 2: REVIEW
+    ═══════════════════════════════════════════════════════════════
+
+    WHAT THIS SCREEN DOES:
+    After detection, the user reviews what will be redacted before
+    committing. Nothing is permanent until "Download redacted PDF"
+    is clicked and the file is saved. This screen is fully reversible.
+
+    WHAT THIS SCREEN IS NOT:
+    It does not show the output. The downloaded PDF has solid black
+    bars — no text recoverable. This screen shows highlighted text
+    so the user can verify correctness before that happens.
+
+    KEY BEHAVIORAL SPECS — read before building:
+
+    1. TOOLTIP
+       — Appears on HOVER of a highlight cell. Not on click. Not persistent.
+       — Position: absolute, above the hovered cell, centered if space allows.
+       — In this mockup, one tooltip is shown in forced-visible state
+         (class .tip-demo) to communicate its design. Remove .tip-demo
+         in production and rely on :hover only.
+       — Disappears immediately on mouseleave.
+
+    2. PANEL → DOCUMENT LINK
+       — Clicking an entity row in the left panel should visually
+         focus the corresponding highlight(s) on the document.
+       — Implementation: data-entity attribute on both rows and highlights.
+         JS adds .hl-focused to matching highlights on row click.
+       — .hl-focused adds a dark outline, making the cell unmistakable.
+       — If the highlight is off-screen, scroll it into view.
+
+    3. ONE EXIT POINT
+       — "← Start over" lives in the action bar only.
+       — The nav does NOT have a cancel or back button.
+         Two exit points doing the same thing creates confusion.
+
+    4. JUMP BUTTON BEHAVIOR
+       — "Go to next unresolved ↓" navigates to the first highlight
+         with decision === 'UNCERTAIN'. It does NOT batch-resolve.
+       — After the user resolves all uncertain items (clicking each
+         highlight to set it to REDACT or KEEP), this button disappears
+         and "Download redacted PDF" becomes active.
+
+    5. REACTIVE COUNTS
+       — The count chips in the action bar (X removing / X keeping /
+         X to review) update every time a highlight is toggled.
+       — These are live, not decorative. Build them from state.
+
+    6. OUTPUT TRANSFORMATION NOTE
+       — The info bar above the PDF page communicates that the preview
+         shows text and the download contains permanent black bars.
+       — This is the most important trust moment in the flow.
+         Do not remove it. Do not bury it.
+
+    7. DOWNLOAD BUTTON STATE
+       — Disabled (opacity reduced, cursor not-allowed) while
+         any highlight has decision === 'UNCERTAIN'.
+       — Active (full opacity, clickable) when all resolved.
+       — Never fully hidden — always visible, just disabled.
+
+    ═══════════════════════════════════════════════════════════════
+  -->
+  <style>
+
+    /* ── TOKENS ──────────────────────────────────────────────── */
+    :root {
+      --font:      -apple-system, BlinkMacSystemFont, "Segoe UI Variable",
+                   "Segoe UI", system-ui, ui-sans-serif, sans-serif;
+      --font-mono: ui-monospace, "SF Mono", "Cascadia Code", "Cascadia Mono",
+                   "Roboto Mono", Menlo, Monaco, Consolas, monospace;
+      --font-form: Arial, Helvetica, "Liberation Sans", sans-serif;
+
+      --bg:        #F4F1EC;
+      --surface:   #FFFFFF;
+
+      --950:       #1C1812;
+      --700:       #4A4439;
+      --500:       #7B7368;
+      --400:       #9A9186;
+      --300:       #B5AFA8;
+      --200:       #D8D3CB;
+      --150:       #E5E1DA;
+      --100:       #EDEAE4;
+
+      --red:       #C41E1E;
+      --red-soft:  #FBF3F3;
+      --red-b:     rgba(196,30,30,0.24);
+
+      --green:     #1B6E3C;
+      --green-soft:#EFF7F3;
+      --green-b:   rgba(27,110,60,0.24);
+
+      --amber:     #A86E00;
+      --amber-soft:#FDF7EC;
+      --amber-b:   rgba(168,110,0,0.30);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { height: 100%; overflow: hidden; }
+
+    body {
+      background: var(--bg);
+      color: var(--950);
+      font-family: var(--font);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* ── NAV ──────────────────────────────────────────────────
+       No exit button here. One exit lives in the action bar.
+       Nav carries: logo | file name | page indicator
+    ────────────────────────────────────────────────────────── */
+    nav {
+      height: 54px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+      border-bottom: 1px solid var(--150);
+      background: var(--bg);
+      position: relative;
+      z-index: 20;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .mark { width: 18px; height: 23px; flex-shrink: 0; }
+
+    .wordmark {
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: var(--950);
+    }
+
+    .wordmark-r { color: var(--red); }
+
+    /* File info — centered */
+    .nav-file {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .nav-filename {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--700);
+      letter-spacing: -0.025em;
+    }
+
+    .nav-pages {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--300);
+      background: var(--surface);
+      border: 1px solid var(--150);
+      padding: 2px 8px;
+      border-radius: 3px;
+    }
+
+    /* Nothing on the right in the nav.
+       The only CTA is in the action bar. */
+    .nav-end { width: 180px; } /* spacer to balance the logo */
+
+    /* ── LAYOUT ──────────────────────────────────────────────── */
+    .layout {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+      min-height: 0;
+    }
+
+    /* ── LEFT PANEL ──────────────────────────────────────────── */
+    aside {
+      width: 240px;
+      flex-shrink: 0;
+      border-right: 1px solid var(--150);
+      background: var(--surface);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .pb {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--150);
+      flex-shrink: 0;
+    }
+
+    .sec-label {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      font-weight: 500;
+      color: var(--300);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 9px;
+    }
+
+    /* Mode tabs */
+    .tabs {
+      display: flex;
+      background: var(--100);
+      border: 1px solid var(--150);
+      border-radius: 5px;
+      padding: 3px;
+      gap: 2px;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 6px 4px;
+      border-radius: 3px;
+      border: none;
+      background: none;
+      font-family: var(--font);
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--400);
+      cursor: pointer;
+      letter-spacing: -0.025em;
+      transition: all 0.15s ease;
+      line-height: 1;
+    }
+
+    .tab.active {
+      background: var(--surface);
+      color: var(--950);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+    }
+
+    /* ── ENTITY LIST ─────────────────────────────────────────
+       Clicking a row focuses matching highlights on the document.
+       The visual connection between panel and document is the
+       critical interaction this screen must communicate.
+    ────────────────────────────────────────────────────────── */
+    .entity-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px 12px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--150) transparent;
+    }
+
+    .group-label {
+      font-family: var(--font-mono);
+      font-size: 8.5px;
+      font-weight: 500;
+      color: var(--300);
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      padding: 6px 4px 4px;
+    }
+
+    .entity {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.12s ease;
+      user-select: none;
+      border: 1px solid transparent;
+    }
+
+    .entity:hover { background: var(--100); }
+
+    /* Active = selected in panel. Linked highlight on doc is focused. */
+    .entity.active {
+      background: var(--100);
+      border-color: var(--150);
+    }
+
+    /* Left pip — thin vertical rule, not a dot */
+    .pip {
+      width: 2.5px;
+      height: 18px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+    .pip-r { background: var(--red);   }
+    .pip-g { background: var(--green); }
+    .pip-a { background: var(--amber); }
+
+    .entity-name {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--700);
+      flex: 1;
+      letter-spacing: -0.02em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .entity-count {
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      color: var(--300);
+    }
+
+    .tag {
+      font-size: 9px;
+      font-weight: 700;
+      padding: 2px 5px;
+      border-radius: 3px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+
+    .tag-keep   { color: var(--green); background: var(--green-soft); border: 1px solid var(--green-b); }
+    .tag-review { color: var(--amber); background: var(--amber-soft); border: 1px solid var(--amber-b); }
+
+    .entity-sep {
+      height: 1px;
+      background: var(--150);
+      margin: 5px 4px;
+    }
+
+    /* ── REVIEW CALLOUT ──────────────────────────────────────
+       Shows when uncertain items remain.
+       Disappears when count reaches zero.
+       JS toggles .hidden on this element.
+    ────────────────────────────────────────────────────────── */
+    .callout {
+      margin: 10px 12px 0;
+      padding: 10px 12px;
+      border-radius: 7px;
+      background: var(--amber-soft);
+      border: 1px solid var(--amber-b);
+      flex-shrink: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .callout.hidden { display: none; }
+
+    .callout-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 7px;
+    }
+
+    .callout-icon { flex-shrink: 0; color: var(--amber); margin-top: 1px; }
+
+    .callout-head {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--amber);
+      letter-spacing: -0.015em;
+    }
+
+    .callout-sub {
+      font-size: 10.5px;
+      color: var(--amber);
+      opacity: 0.65;
+      margin-top: 2px;
+      padding-left: 21px;
+    }
+
+    /* ── LEGEND ──────────────────────────────────────────────── */
+    .legend {
+      padding: 12px 16px 14px;
+      border-top: 1px solid var(--150);
+      flex-shrink: 0;
+    }
+
+    .legend-row {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 3px 0;
+    }
+
+    /* Swatch matches the highlight style exactly */
+    .swatch {
+      width: 18px;
+      height: 11px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    .sw-r { background: var(--red-soft);   border-left: 2.5px solid var(--red);   }
+    .sw-g { background: var(--green-soft); border-left: 2.5px solid var(--green); }
+    .sw-a { background: var(--amber-soft); border: 1.5px dashed var(--amber-b);   }
+
+    .legend-text  { font-size: 11px; color: var(--500); flex: 1; }
+    .legend-hint  { font-size: 10px; color: var(--300); font-style: italic; }
+
+    /* ── PAGES ───────────────────────────────────────────────── */
+    .pages {
+      padding: 10px 12px 14px;
+      border-top: 1px solid var(--150);
+      flex-shrink: 0;
+    }
+
+    .thumbs { display: flex; gap: 6px; }
+
+    .thumb {
+      flex: 1;
+      height: 34px;
+      border-radius: 4px;
+      border: 1.5px solid var(--150);
+      background: var(--100);
+      position: relative;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      overflow: hidden;
+    }
+
+    .thumb.active { border-color: var(--950); background: var(--surface); }
+    .thumb:hover:not(.active) { border-color: var(--200); }
+
+    .thumb-n {
+      position: absolute;
+      bottom: 3px; right: 5px;
+      font-family: var(--font-mono);
+      font-size: 7.5px;
+      color: var(--300);
+    }
+
+    /* Amber dot = unresolved items on that page */
+    .thumb-dot {
+      position: absolute;
+      top: 4px; right: 4px;
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--amber);
+    }
+
+    .thumb::before {
+      content: '';
+      position: absolute;
+      top: 5px; left: 4px; right: 12px;
+      height: 2px;
+      border-radius: 1px;
+      background: var(--200);
+      box-shadow:
+        0 4px 0 rgba(0,0,0,0.06),
+        0 9px 0 rgba(196,30,30,0.35),
+        0 9px 0 3px rgba(196,30,30,0.25);
+    }
+
+    /* ── DOCUMENT AREA ───────────────────────────────────────── */
+    .doc-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      background: var(--bg);
+    }
+
+    /* Toolbar */
+    .doc-bar {
+      height: 42px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      border-bottom: 1px solid var(--150);
+      background: var(--surface);
+    }
+
+    .doc-bar-l, .doc-bar-r {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .page-num {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--400);
+      min-width: 44px;
+      text-align: center;
+    }
+
+    .zoom-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--300);
+      min-width: 34px;
+      text-align: right;
+    }
+
+    .icon-btn {
+      width: 26px; height: 26px;
+      border-radius: 5px;
+      border: 1px solid var(--150);
+      background: none;
+      color: var(--500);
+      font-family: var(--font);
+      font-size: 12px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      transition: all 0.12s ease;
+    }
+
+    .icon-btn:hover { background: var(--100); border-color: var(--200); color: var(--950); }
+
+    /* ── OUTPUT TRANSFORMATION NOTE ──────────────────────────────
+       This communicates the most important thing on this screen:
+       the preview shows text, the output has black bars.
+       Thin, legible, non-intrusive. Do not remove.
+    ────────────────────────────────────────────────────────────── */
+    .output-note {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 7px 20px;
+      background: var(--100);
+      border-bottom: 1px solid var(--150);
+      flex-shrink: 0;
+    }
+
+    .output-note-text {
+      font-size: 11.5px;
+      font-weight: 400;
+      color: var(--400);
+      letter-spacing: -0.01em;
+    }
+
+    .output-note-sep {
+      font-size: 11px;
+      color: var(--200);
+    }
+
+    /* Small before/after visual pill */
+    .output-compare {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .compare-before {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 10.5px;
+      font-weight: 500;
+      color: var(--500);
+    }
+
+    .compare-swatch-text {
+      width: 32px;
+      height: 11px;
+      border-radius: 2px;
+      background: var(--red-soft);
+      border-left: 2px solid var(--red);
+    }
+
+    .compare-arrow {
+      font-size: 10px;
+      color: var(--200);
+    }
+
+    .compare-after {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 10.5px;
+      font-weight: 500;
+      color: var(--500);
+    }
+
+    .compare-swatch-black {
+      width: 32px;
+      height: 11px;
+      border-radius: 2px;
+      background: var(--950);
+    }
+
+    /* Viewport */
+    .viewport {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 28px 32px 48px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--200) transparent;
+    }
+
+    /* ── PDF PAGE ──────────────────────────────────────────────── */
+    .page {
+      width: 100%;
+      max-width: 540px;
+      background: white;
+      border-radius: 2px;
+      box-shadow:
+        0 1px 3px rgba(28,24,18,0.08),
+        0 8px 32px rgba(28,24,18,0.10),
+        0 24px 56px rgba(28,24,18,0.06);
+      padding: 44px 48px;
+      flex-shrink: 0;
+      animation: appear 0.3s cubic-bezier(0.22,1,0.36,1) both;
+    }
+
+    @keyframes appear {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* W-2 form typography */
+    .w2-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 6px;
+    }
+
+    .w2-title {
+      font-family: var(--font-form);
+      font-size: 10.5px;
+      font-weight: 700;
+      color: #111;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .w2-gov {
+      font-family: var(--font-form);
+      font-size: 7px;
+      color: #777;
+      text-align: right;
+      line-height: 1.4;
+    }
+
+    .w2-rule-heavy { height: 2.5px; background: #111; }
+    .w2-rule-gap   { height: 2px; background: white; }
+    .w2-rule-light { height: 1px; background: #bbb; }
+
+    .w2-grid {
+      border: 1px solid #ccc;
+      border-top: none;
+    }
+
+    .w2-row {
+      display: flex;
+      border-bottom: 1px solid #ccc;
+    }
+
+    .w2-row:last-child { border-bottom: none; }
+
+    .w2-cell {
+      padding: 5px 7px;
+      border-right: 1px solid #ccc;
+      position: relative; /* required for .hl absolute positioning */
+      min-height: 36px;
+    }
+
+    .w2-cell:last-child { border-right: none; }
+
+    .cell-lbl {
+      font-family: var(--font-form);
+      font-size: 6.5px;
+      color: #999;
+      letter-spacing: 0.02em;
+      display: block;
+      margin-bottom: 4px;
+      position: relative;
+      z-index: 2; /* above highlight */
+    }
+
+    .cell-val {
+      font-family: var(--font-form);
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #1a1a1a;
+      line-height: 1.2;
+      position: relative;
+      z-index: 2; /* above highlight */
+    }
+
+    .cell-val-sm {
+      font-family: var(--font-form);
+      font-size: 10px;
+      font-weight: 400;
+      color: #444;
+      line-height: 1.4;
+      position: relative;
+      z-index: 2; /* above highlight */
+    }
+
+    /* ── HIGHLIGHT SYSTEM ────────────────────────────────────────
+       Highlights sit BETWEEN the cell background and the text.
+       Text is always readable in preview.
+       z-index: 1 = highlight, z-index: 2 = text/labels.
+
+       THREE STATES:
+       .hl-r  = will be removed  (red tint + left rule)
+       .hl-g  = will be kept     (green tint + left rule)
+       .hl-a  = uncertain        (amber tint + dashed border)
+
+       TOGGLE BEHAVIOR:
+       Click hl-r → hl-g (and vice versa)
+       Click hl-a → hl-r (first resolution is "remove")
+
+       FOCUS STATE (from panel click):
+       .hl-focused = dark outline, draws eye to the selected entity.
+       Only one group of highlights is focused at a time.
+    ────────────────────────────────────────────────────────────── */
+    .hl {
+      position: absolute;
+      inset: 2px;
+      border-radius: 2px;
+      cursor: pointer;
+      z-index: 1;
+      transition: outline 0.1s ease, opacity 0.15s ease;
+    }
+
+    .hl:hover { opacity: 0.75; }
+
+    /* Focused = selected from panel. Strong outline. */
+    .hl.hl-focused {
+      outline: 2px solid var(--950);
+      outline-offset: 1px;
+    }
+
+    .hl-r {
+      background: var(--red-soft);
+      border-left: 2.5px solid var(--red);
+    }
+
+    .hl-g {
+      background: var(--green-soft);
+      border-left: 2.5px solid var(--green);
+    }
+
+    .hl-a {
+      background: var(--amber-soft);
+      border: 1.5px dashed rgba(168,110,0,0.38);
+      /* No animation — animation on UI elements signals decoration.
+         The dashed border alone communicates "needs attention." */
+    }
+
+    /* ── TOOLTIP ─────────────────────────────────────────────────
+       HOVER ONLY. Appears above the hovered cell.
+       In this mockup, the SSN cell has class .tip-demo which
+       forces the tooltip visible to show its design.
+       In production: show on :hover, hide on :not(:hover).
+
+       The tooltip is inside the .w2-cell so it positions relative
+       to the cell. Use JS to reposition if near viewport edges.
+    ────────────────────────────────────────────────────────────── */
+    .tip {
+      display: none; /* Hidden by default */
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 0;
+      background: var(--950);
+      color: white;
+      border-radius: 6px;
+      padding: 9px 13px;
+      white-space: nowrap;
+      z-index: 30;
+      pointer-events: none;
+      box-shadow: 0 6px 20px rgba(28,24,18,0.22);
+    }
+
+    /* Arrow */
+    .tip::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 14px;
+      border: 5px solid transparent;
+      border-top-color: var(--950);
+    }
+
+    .tip-type {
+      font-family: var(--font-mono);
+      font-size: 8.5px;
+      color: rgba(255,255,255,0.4);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 3px;
+    }
+
+    .tip-val {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      margin-bottom: 7px;
+    }
+
+    .tip-actions { display: flex; gap: 5px; }
+
+    .tip-btn {
+      font-family: var(--font);
+      font-size: 10.5px;
+      font-weight: 500;
+      padding: 3px 8px;
+      border-radius: 4px;
+      border: none;
+      cursor: pointer;
+      letter-spacing: -0.01em;
+    }
+
+    .tip-action-keep {
+      background: rgba(255,255,255,0.10);
+      color: rgba(255,255,255,0.75);
+    }
+
+    .tip-action-keep:hover { background: rgba(255,255,255,0.16); }
+
+    /* DEMO ONLY: forces tooltip visible on the SSN cell.
+       Remove this class in production. */
+    .tip-demo .tip { display: block; }
+
+    /* ── ACTION BAR ──────────────────────────────────────────────
+       One exit: "← Start over" on the left.
+       Middle: live counts (update when highlights toggle).
+       Right: jump button (while uncertain > 0) + download button.
+    ────────────────────────────────────────────────────────────── */
+    .action-bar {
+      height: 60px;
+      flex-shrink: 0;
+      border-top: 1px solid var(--150);
+      background: var(--surface);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+    }
+
+    .bar-l {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    /* Live count chips — update via JS on every highlight toggle */
+    .counts {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .count {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border-radius: 5px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+
+    .count-n { font-family: var(--font-mono); font-size: 12px; }
+
+    .c-r { color: var(--red);   background: var(--red-soft);   }
+    .c-g { color: var(--green); background: var(--green-soft); }
+    .c-a { color: var(--amber); background: var(--amber-soft); }
+
+    .bar-r {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 8px 16px;
+      border-radius: 9px;
+      font-family: var(--font);
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: -0.025em;
+      cursor: pointer;
+      border: none;
+      transition: all 0.15s ease;
+      line-height: 1;
+    }
+
+    .btn-ghost {
+      background: none;
+      color: var(--400);
+      border: 1px solid var(--150);
+    }
+
+    .btn-ghost:hover { background: var(--100); border-color: var(--200); color: var(--700); }
+
+    /* Jump button — visible only while uncertain items exist.
+       JS adds .hidden when uncertain count reaches 0. */
+    .btn-jump {
+      background: var(--amber-soft);
+      color: var(--amber);
+      border: 1px solid var(--amber-b);
+    }
+
+    .btn-jump:hover { background: #F5EDD4; }
+    .btn-jump.hidden { display: none; }
+
+    .btn-primary {
+      background: var(--950);
+      color: white;
+      padding: 8px 20px;
+    }
+
+    .btn-primary:hover { background: #2D2820; }
+
+    /* Disabled while uncertain items remain */
+    .btn-primary:disabled {
+      opacity: 0.28;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    /* Local badge */
+    .local-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11.5px;
+      font-weight: 500;
+      color: var(--400);
+      letter-spacing: -0.01em;
+    }
+
+    /* Static green dot — no animation.
+       A pulsing dot implies status change. This status never changes. */
+    .local-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      flex-shrink: 0;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--200); border-radius: 2px; }
+
+  </style>
+</head>
+<body>
+
+  <!-- NAV
+       Note: no cancel/back button here.
+       One exit = one place. See action bar. -->
+  <nav>
+    <a class="logo" href="#">
+      <svg class="mark" viewBox="0 0 18 23" fill="none" aria-hidden="true">
+        <rect x="0.75" y="0.75" width="16.5" height="21.5" rx="2"
+          fill="white" stroke="#D8D3CB" stroke-width="1.5"/>
+        <path d="M12.5 0.75 V5.75 H17.25"
+          fill="#EDEAE4" stroke="#D8D3CB" stroke-width="1.5" stroke-linejoin="round"/>
+        <rect x="3" y="3"    width="7"   height="1.5" rx="0.75" fill="#D8D3CB"/>
+        <rect x="3" y="6.5"  width="9.5" height="1.5" rx="0.75" fill="#D8D3CB"/>
+        <rect x="0.75" y="10" width="16.5" height="5.5" fill="#1C1812"/>
+        <rect x="3" y="18"   width="8"   height="1.5" rx="0.75" fill="#D8D3CB"/>
+        <rect x="3" y="20.5" width="5"   height="1.5" rx="0.75" fill="#D8D3CB"/>
+      </svg>
+      <span class="wordmark">local<span class="wordmark-r">redact</span></span>
+    </a>
+
+    <div class="nav-file">
+      <span class="nav-filename">W2_2024_Employee.pdf</span>
+      <span class="nav-pages">p. 1 / 2</span>
+    </div>
+
+    <div class="nav-end"></div>
+  </nav>
+
+  <!-- LAYOUT -->
+  <div class="layout">
+
+    <!-- LEFT PANEL -->
+    <aside>
+
+      <div class="pb">
+        <div class="sec-label">Mode</div>
+        <div class="tabs">
+          <button class="tab active">Identity only</button>
+          <button class="tab">Full redact</button>
+        </div>
+      </div>
+
+      <div class="entity-scroll">
+
+        <div class="group-label">Removing</div>
+
+        <!-- data-entity links this row to matching .hl[data-entity] elements -->
+        <div class="entity" data-entity="ssn">
+          <div class="pip pip-r"></div>
+          <span class="entity-name">Social security no.</span>
+          <span class="entity-count">×1</span>
+        </div>
+
+        <div class="entity active" data-entity="name">
+          <div class="pip pip-r"></div>
+          <span class="entity-name">Employee name</span>
+          <span class="entity-count">×2</span>
+        </div>
+
+        <div class="entity" data-entity="address">
+          <div class="pip pip-r"></div>
+          <span class="entity-name">Street address</span>
+          <span class="entity-count">×1</span>
+        </div>
+
+        <div class="entity" data-entity="phone">
+          <div class="pip pip-r"></div>
+          <span class="entity-name">Phone number</span>
+          <span class="entity-count">×1</span>
+        </div>
+
+        <div class="entity-sep"></div>
+        <div class="group-label">Keeping</div>
+
+        <div class="entity" data-entity="money">
+          <div class="pip pip-g"></div>
+          <span class="entity-name">Dollar amounts</span>
+          <span class="tag tag-keep">Keep</span>
+        </div>
+
+        <div class="entity-sep"></div>
+        <div class="group-label">Your decision</div>
+
+        <div class="entity" data-entity="ein">
+          <div class="pip pip-a"></div>
+          <span class="entity-name">Employer EIN</span>
+          <span class="tag tag-review">Review</span>
+        </div>
+
+        <div class="entity" data-entity="employer">
+          <div class="pip pip-a"></div>
+          <span class="entity-name">Employer name</span>
+          <span class="tag tag-review">Review</span>
+        </div>
+
+      </div>
+
+      <!-- Callout: hidden when uncertain count reaches 0 -->
+      <div class="callout" id="callout">
+        <div class="callout-row">
+          <svg class="callout-icon" width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M7 1.5 L12.5 11.5 H1.5 L7 1.5Z"
+              stroke="#A86E00" stroke-width="1.2" stroke-linejoin="round"/>
+            <line x1="7" y1="5.5" x2="7" y2="8.5"
+              stroke="#A86E00" stroke-width="1.2" stroke-linecap="round"/>
+            <circle cx="7" cy="10.5" r="0.6" fill="#A86E00"/>
+          </svg>
+          <span class="callout-head" id="callout-text">2 items need a decision</span>
+        </div>
+        <div class="callout-sub">Click each highlight on the document</div>
+      </div>
+
+      <!-- Legend — swatches match highlight styles exactly -->
+      <div class="legend">
+        <div class="sec-label" style="margin-bottom:8px;">Legend</div>
+        <div class="legend-row">
+          <div class="swatch sw-r"></div>
+          <span class="legend-text">Will be removed</span>
+          <span class="legend-hint">click to keep</span>
+        </div>
+        <div class="legend-row">
+          <div class="swatch sw-g"></div>
+          <span class="legend-text">Keeping</span>
+          <span class="legend-hint">click to remove</span>
+        </div>
+        <div class="legend-row">
+          <div class="swatch sw-a"></div>
+          <span class="legend-text">Needs decision</span>
+          <span class="legend-hint">click to decide</span>
+        </div>
+      </div>
+
+      <!-- Page thumbnails -->
+      <div class="pages">
+        <div class="sec-label" style="margin-bottom:7px;">Pages</div>
+        <div class="thumbs">
+          <div class="thumb active"><span class="thumb-n">1</span></div>
+          <div class="thumb">
+            <div class="thumb-dot"></div>
+            <span class="thumb-n">2</span>
+          </div>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- DOCUMENT AREA -->
+    <div class="doc-area">
+
+      <!-- Page toolbar -->
+      <div class="doc-bar">
+        <div class="doc-bar-l">
+          <button class="icon-btn">‹</button>
+          <span class="page-num">1 / 2</span>
+          <button class="icon-btn">›</button>
+        </div>
+        <div class="doc-bar-r">
+          <span class="zoom-label">100%</span>
+          <button class="icon-btn">−</button>
+          <button class="icon-btn">+</button>
+        </div>
+      </div>
+
+      <!-- OUTPUT TRANSFORMATION NOTE
+           This bar is the most important trust signal on the screen.
+           It communicates the difference between preview and output.
+           Do not hide or remove this. -->
+      <div class="output-note">
+        <div class="output-compare">
+          <div class="compare-before">
+            <div class="compare-swatch-text"></div>
+            Preview
+          </div>
+          <div class="compare-arrow">→</div>
+          <div class="compare-after">
+            <div class="compare-swatch-black"></div>
+            Downloaded PDF
+          </div>
+        </div>
+        <div class="output-note-sep">·</div>
+        <span class="output-note-text">
+          Text stays visible here so you can verify.
+          The downloaded file has permanent black bars — nothing recoverable.
+        </span>
+      </div>
+
+      <!-- Document viewport -->
+      <div class="viewport">
+        <div class="page">
+
+          <!-- W-2 Header -->
+          <div class="w2-head">
+            <div>
+              <div class="w2-title">W-2 Wage and Tax Statement &nbsp;2024</div>
+              <div style="font-family:var(--font-form); font-size:7px; color:#bbb; margin-top:2px;">
+                Copy B — To Be Filed With Employee's Federal Tax Return
+              </div>
+            </div>
+            <div class="w2-gov">
+              Department of the Treasury<br>Internal Revenue Service
+            </div>
+          </div>
+
+          <div class="w2-rule-heavy"></div>
+          <div class="w2-rule-gap"></div>
+          <div class="w2-rule-light"></div>
+
+          <div class="w2-grid">
+
+            <!-- Row 1: SSN + OMB
+                 .tip-demo forces tooltip visible for this mockup.
+                 Remove .tip-demo in production — hover triggers it. -->
+            <div class="w2-row">
+              <div class="w2-cell tip-demo" style="flex:2.5; position:relative;">
+                <div class="hl hl-r" data-entity="ssn">
+                  <!-- HOVER tooltip — shown here for reference only -->
+                  <div class="tip">
+                    <div class="tip-type">US_SSN</div>
+                    <div class="tip-val">412–67–9823</div>
+                    <div class="tip-actions">
+                      <button class="tip-btn tip-action-keep">Keep instead</button>
+                    </div>
+                  </div>
+                </div>
+                <span class="cell-lbl">a — Employee's social security number</span>
+                <span class="cell-val">412–67–9823</span>
+              </div>
+              <div class="w2-cell" style="flex:1.5;">
+                <span class="cell-lbl">OMB No. 1545-0008</span>
+                <span class="cell-val-sm">Safe, accurate, FAST!<br>Use the IRS website.</span>
+              </div>
+            </div>
+
+            <!-- Row 2: EIN + Wages + Fed Tax -->
+            <div class="w2-row">
+              <div class="w2-cell" style="flex:2; position:relative;">
+                <div class="hl hl-a" data-entity="ein"></div>
+                <span class="cell-lbl">b — Employer identification number (EIN)</span>
+                <span class="cell-val">12–3456789</span>
+              </div>
+              <div class="w2-cell" style="flex:1.5; position:relative;">
+                <div class="hl hl-g" data-entity="money"></div>
+                <span class="cell-lbl">1 — Wages, tips, other compensation</span>
+                <span class="cell-val">$84,200.00</span>
+              </div>
+              <div class="w2-cell" style="flex:1.5; position:relative;">
+                <div class="hl hl-g" data-entity="money"></div>
+                <span class="cell-lbl">2 — Federal income tax withheld</span>
+                <span class="cell-val">$12,840.00</span>
+              </div>
+            </div>
+
+            <!-- Row 3: Employer name/address + SS wages + SS tax -->
+            <div class="w2-row">
+              <div class="w2-cell" style="flex:2.5; position:relative;">
+                <!-- Employer name = uncertain (data-entity="employer") -->
+                <div class="hl hl-a" data-entity="employer"></div>
+                <span class="cell-lbl">c — Employer's name, address, and ZIP code</span>
+                <span class="cell-val">Meridian Financial Group LLC</span>
+                <span class="cell-val-sm">880 Market St, San Francisco CA 94102</span>
+              </div>
+              <div class="w2-cell" style="flex:1.5; position:relative;">
+                <div class="hl hl-g" data-entity="money"></div>
+                <span class="cell-lbl">3 — Social security wages</span>
+                <span class="cell-val">$84,200.00</span>
+              </div>
+              <div class="w2-cell" style="flex:1.5; position:relative;">
+                <div class="hl hl-g" data-entity="money"></div>
+                <span class="cell-lbl">4 — Social security tax withheld</span>
+                <span class="cell-val">$5,220.40</span>
+              </div>
+            </div>
+
+            <!-- Row 4: Employee name + Medicare -->
+            <div class="w2-row">
+              <div class="w2-cell" style="flex:2.5; position:relative;">
+                <!-- Employee name — redact (data-entity="name") -->
+                <!-- This is the "active" selection from the panel -->
+                <div class="hl hl-r hl-focused" data-entity="name"></div>
+                <span class="cell-lbl">e — Employee's first name, last name, suffix</span>
+                <span class="cell-val">Jordan A. Martinez</span>
+              </div>
+              <div class="w2-cell" style="flex:1.5; position:relative;">
+                <div class="hl hl-g" data-entity="money"></div>
+                <span class="cell-lbl">5 — Medicare wages and tips</span>
+                <span class="cell-val">$84,200.00</span>
+              </div>
+              <div class="w2-cell" style="flex:1.5; position:relative;">
+                <div class="hl hl-g" data-entity="money"></div>
+                <span class="cell-lbl">6 — Medicare tax withheld</span>
+                <span class="cell-val">$1,220.90</span>
+              </div>
+            </div>
+
+            <!-- Row 5: Employee address -->
+            <div class="w2-row">
+              <div class="w2-cell" style="flex:1; position:relative;">
+                <div class="hl hl-r" data-entity="address"></div>
+                <span class="cell-lbl">f — Employee's address and ZIP code</span>
+                <span class="cell-val">441 Birchwood Lane, Apt 8B</span>
+                <span class="cell-val-sm">Columbus, OH 43201</span>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- State section -->
+          <div style="display:flex; border:1px solid #ccc; border-top:none;">
+            <div class="w2-cell" style="flex:0.6;">
+              <span class="cell-lbl">15 — State</span>
+              <span class="cell-val" style="font-size:10px;">OH</span>
+            </div>
+            <div class="w2-cell" style="flex:1.7;">
+              <span class="cell-lbl">16 — State wages</span>
+              <span class="cell-val" style="font-size:10px;">$84,200.00</span>
+            </div>
+            <div class="w2-cell" style="flex:1.7; border-right:none;">
+              <span class="cell-lbl">17 — State income tax</span>
+              <span class="cell-val" style="font-size:10px;">$2,947.00</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ACTION BAR
+       Left:   exit + live counts
+       Right:  jump button (disappears when uncertain = 0) + download
+       The download button is disabled until uncertain = 0. -->
+  <div class="action-bar">
+    <div class="bar-l">
+      <!-- One exit point. The only one. -->
+      <button class="btn btn-ghost">← Start over</button>
+
+      <!-- Live counts — update via JS on every toggle -->
+      <div class="counts">
+        <div class="count c-r">
+          <span class="count-n" id="ct-r">5</span>
+          <span>removing</span>
+        </div>
+        <div class="count c-g">
+          <span class="count-n" id="ct-g">4</span>
+          <span>keeping</span>
+        </div>
+        <div class="count c-a">
+          <span class="count-n" id="ct-a">2</span>
+          <span>to review</span>
+        </div>
+      </div>
+
+      <div class="local-badge" style="padding-left:16px; border-left:1px solid var(--150);">
+        <div class="local-dot"></div>
+        Local only — 0 bytes sent
+      </div>
+    </div>
+
+    <div class="bar-r">
+      <!-- Jump button: navigates to first uncertain item.
+           Does NOT batch-resolve. Disappears when all resolved. -->
+      <button class="btn btn-jump" id="btn-jump">
+        Go to next unresolved ↓
+      </button>
+
+      <!-- Download: disabled until all uncertain resolved -->
+      <button class="btn btn-primary" id="btn-download" disabled>
+        Download redacted PDF
+      </button>
+    </div>
+  </div>
+
+  <script>
+    /* ── STATE ─────────────────────────────────────────────── */
+    let counts = { r: 5, g: 4, a: 2 };
+
+    function updateCounts() {
+      document.getElementById('ct-r').textContent = counts.r;
+      document.getElementById('ct-g').textContent = counts.g;
+      document.getElementById('ct-a').textContent = counts.a;
+
+      // Jump button visibility
+      const jumpBtn = document.getElementById('btn-jump');
+      jumpBtn.classList.toggle('hidden', counts.a === 0);
+
+      // Download button
+      document.getElementById('btn-download').disabled = counts.a > 0;
+
+      // Callout visibility
+      const callout = document.getElementById('callout');
+      callout.classList.toggle('hidden', counts.a === 0);
+      if (counts.a > 0) {
+        document.getElementById('callout-text').textContent =
+          `${counts.a} item${counts.a !== 1 ? 's' : ''} need a decision`;
+      }
+    }
+
+    /* ── HIGHLIGHT TOGGLE ───────────────────────────────────── */
+    document.querySelectorAll('.hl').forEach(hl => {
+      hl.addEventListener('click', e => {
+        e.stopPropagation();
+
+        if (hl.classList.contains('hl-r')) {
+          hl.classList.replace('hl-r', 'hl-g');
+          counts.r--;
+          counts.g++;
+        } else if (hl.classList.contains('hl-g')) {
+          hl.classList.replace('hl-g', 'hl-r');
+          counts.g--;
+          counts.r++;
+        } else if (hl.classList.contains('hl-a')) {
+          /* First resolution: uncertain → remove */
+          hl.classList.replace('hl-a', 'hl-r');
+          counts.a--;
+          counts.r++;
+          /* Update the entity row tag if it exists */
+          const id = hl.dataset.entity;
+          const row = document.querySelector(`.entity[data-entity="${id}"]`);
+          if (row) {
+            const tag = row.querySelector('.tag');
+            if (tag) {
+              tag.textContent = 'Remove';
+              tag.className = 'tag';
+              tag.style.cssText =
+                `color:var(--red); background:var(--red-soft);
+                 border:1px solid var(--red-b);`;
+            }
+            const pip = row.querySelector('.pip');
+            if (pip) { pip.className = 'pip pip-r'; }
+          }
+        }
+
+        updateCounts();
+      });
+    });
+
+    /* ── PANEL → DOCUMENT LINK ──────────────────────────────── */
+    document.querySelectorAll('.entity').forEach(row => {
+      row.addEventListener('click', () => {
+        // Deselect all rows
+        document.querySelectorAll('.entity').forEach(r => r.classList.remove('active'));
+        row.classList.add('active');
+
+        const entityId = row.dataset.entity;
+
+        // Remove focus from all highlights
+        document.querySelectorAll('.hl').forEach(h => h.classList.remove('hl-focused'));
+
+        // Focus matching highlights
+        const matches = document.querySelectorAll(`.hl[data-entity="${entityId}"]`);
+        matches.forEach(h => h.classList.add('hl-focused'));
+
+        // Scroll the first match into view
+        if (matches.length > 0) {
+          matches[0].closest('.w2-cell').scrollIntoView({
+            behavior: 'smooth',
+            block: 'nearest',
+          });
+        }
+      });
+    });
+
+    /* ── JUMP TO NEXT UNCERTAIN ─────────────────────────────── */
+    document.getElementById('btn-jump').addEventListener('click', () => {
+      const first = document.querySelector('.hl.hl-a');
+      if (!first) return;
+
+      // Focus it visually
+      document.querySelectorAll('.hl').forEach(h => h.classList.remove('hl-focused'));
+      first.classList.add('hl-focused');
+
+      // Scroll into view
+      first.closest('.w2-cell').scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+      // Also select the matching entity row
+      const entityId = first.dataset.entity;
+      document.querySelectorAll('.entity').forEach(r => r.classList.remove('active'));
+      const matchingRow = document.querySelector(`.entity[data-entity="${entityId}"]`);
+      if (matchingRow) matchingRow.classList.add('active');
+    });
+
+    /* ── MODE TABS ──────────────────────────────────────────── */
+    document.querySelectorAll('.tab').forEach(t => {
+      t.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+        t.classList.add('active');
+      });
+    });
+
+    /* ── PAGE THUMBS ─────────────────────────────────────────── */
+    document.querySelectorAll('.thumb').forEach(t => {
+      t.addEventListener('click', () => {
+        document.querySelectorAll('.thumb').forEach(x => x.classList.remove('active'));
+        t.classList.add('active');
+      });
+    });
+
+    /* Init */
+    updateCounts();
+  </script>
+
+</body>
+</html>
