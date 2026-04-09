@@ -8,7 +8,8 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "test": "vitest run --reporter=verbose",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "create-fixtures": "npx tsx tests/fixtures/create-fixtures.ts"
   },
   "dependencies": {
     "@preact/signals": "2.0.2",
