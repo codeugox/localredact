@@ -14,6 +14,7 @@ import {
   keepCount,
   uncertainCount,
   pdfPassword,
+  dpiFallbackWarning,
   trackBlobUrl,
   untrackBlobUrl,
 } from '../app/state'
@@ -30,7 +31,9 @@ async function handleDownload(): Promise<void> {
   dispatch({ type: 'REDACTION_START' })
 
   try {
-    const { redactDocument } = await import('../core/pipeline/redact-document')
+    const { redactDocument, DPI_FALLBACK_WARNING } = await import(
+      '../core/pipeline/redact-document'
+    )
 
     // If we have a stored password from the detection phase,
     // pass it as an onPassword callback that auto-responds
@@ -47,7 +50,11 @@ async function handleDownload(): Promise<void> {
       (page, total) => {
         dispatch({ type: 'REDACTION_PROGRESS', page, total })
       },
-      onPassword
+      onPassword,
+      () => {
+        // DPI fallback callback — set warning signal for display on done screen
+        dpiFallbackWarning.value = DPI_FALLBACK_WARNING
+      }
     )
 
     // Trigger browser download via invisible <a> element

@@ -3,7 +3,7 @@
 // Shows output filename, privacy message, and "Redact another document" button.
 
 import { useCallback } from 'preact/hooks'
-import { dispatch, currentFile } from '../app/state'
+import { dispatch, currentFile, dpiFallbackWarning } from '../app/state'
 import { getOutputFilename } from '../utils/filename'
 
 /**
@@ -16,6 +16,7 @@ export function DoneScreen() {
   const outputName = file
     ? getOutputFilename(file.name)
     : 'document-redacted.pdf'
+  const fallbackWarning = dpiFallbackWarning.value
 
   const handleStartOver = useCallback(() => {
     dispatch({ type: 'RESET' })
@@ -44,6 +45,13 @@ export function DoneScreen() {
 
           {/* Output filename */}
           <p class="done-filename">{outputName}</p>
+
+          {/* DPI fallback warning */}
+          {fallbackWarning && (
+            <p class="done-warning" role="alert">
+              {fallbackWarning}
+            </p>
+          )}
 
           {/* Privacy message */}
           <p class="done-privacy">
