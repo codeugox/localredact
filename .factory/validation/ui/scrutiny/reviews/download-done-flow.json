@@ -1,0 +1,28 @@
+{
+  "featureId": "download-done-flow",
+  "reviewedAt": "2026-04-09T08:47:53.652805Z",
+  "commitId": "da51717",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "Footer/download flow is mostly implemented, but redaction download fails for password-protected PDFs because the redaction trigger omits password callback handling.",
+    "issues": [
+      {
+        "file": "src/components/FooterBar.tsx",
+        "line": 31,
+        "severity": "blocking",
+        "description": "FooterBar calls redactDocument(file, entities, onProgress) without the onPassword callback. redactDocument re-opens the PDF via loadPDF(file, onPassword), so encrypted PDFs that reached preview via password entry cannot be reopened during download; the call throws and transitions to ERROR instead of downloading and reaching DONE. Supporting evidence: password callback wiring exists only during detection in src/components/DropScreen.tsx:48-53."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The ui-worker verification procedure did not force regression checks for password-protected PDFs when wiring download/redaction flows, allowing an encrypted-PDF breakage to slip through.",
+      "evidence": "Handoff interactiveChecks only cover a standard PDF flow (test-pii.pdf). Code path in src/components/FooterBar.tsx:31-36 omits onPassword, while password handling is isolated to src/components/DropScreen.tsx:48-53."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Fail: UI and state wiring for download/done are present, but encrypted PDFs cannot complete the download flow due to missing password callback propagation into redactDocument."
+}
