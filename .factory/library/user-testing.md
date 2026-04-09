@@ -46,6 +46,20 @@ Pre-built test fixture PDFs are available at `tests/fixtures/*.pdf`. Validators 
 - 5 instances + dev server = 1.7GB (well within budget)
 - **Max concurrent validators: 5**
 
+## Security Assertions (VAL-SEC-*)
+
+Security assertions (especially VAL-SEC-001) MUST be tested against the **production preview server** (port 5174), not the dev server (port 5173). The dev server relaxes CSP for HMR websocket support.
+
+To use preview mode:
+1. Build: `npx vite build`
+2. Start preview: `npx vite preview --port 5174 --host` (or use services.yaml `preview` service)
+3. Navigate to `http://localhost:5174` for testing
+4. Stop after: `lsof -ti :5174 | xargs kill`
+
+## DPI Fallback Testing (VAL-EDGE-003)
+
+To test the DPI fallback path, append `?dpi-fallback-test=true` to the URL before uploading a file. This forces the rasterizer to fail at 300 DPI on the first attempt, triggering the 240 DPI fallback with user warning on the DoneScreen.
+
 ## Notes
 - No auth barriers — validators can navigate directly to the app
 - File interactions require drag-and-drop or file picker automation via agent-browser
