@@ -1,0 +1,27 @@
+{
+  "name": "local-redact",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port 5173",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run --reporter=verbose",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@preact/signals": "2.0.2",
+    "jspdf": "2.5.2",
+    "pdfjs-dist": "5.5.207",
+    "preact": "10.25.4"
+  },
+  "devDependencies": {
+    "@preact/preset-vite": "2.9.4",
+    "@types/node": "22.14.0",
+    "jsdom": "26.0.0",
+    "typescript": "5.8.3",
+    "vite": "6.3.2",
+    "vitest": "3.1.1"
+  }
+}
