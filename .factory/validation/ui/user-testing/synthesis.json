@@ -1,23 +1,18 @@
 {
   "milestone": "ui",
-  "round": 3,
-  "status": "fail",
+  "round": 4,
+  "status": "pass",
   "assertionsSummary": {
-    "total": 2,
+    "total": 1,
     "passed": 1,
-    "failed": 1,
+    "failed": 0,
     "blocked": 0
   },
   "passedAssertions": [
-    "VAL-DETECT-011"
+    "VAL-DETECT-007"
   ],
-  "failedAssertions": [
-    {
-      "id": "VAL-DETECT-007",
-      "reason": "Standalone unlabeled EIN still auto-redacts instead of remaining UNCERTAIN (amber)."
-    }
-  ],
+  "failedAssertions": [],
   "blockedAssertions": [],
   "appliedUpdates": [],
-  "previousRound": ".factory/validation/ui/user-testing/synthesis.round2.json"
+  "previousRound": ".factory/validation/ui/user-testing/synthesis.round3.json"
 }
