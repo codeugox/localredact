@@ -413,4 +413,124 @@ describe('mergeEntities', () => {
       expect(result[0].textOffset.end).toBe(20)
     })
   })
+
+  // ─── Separator Preservation (Regression) ────────────────────
+
+  describe('separator preservation when merging adjacent spans', () => {
+    it('should preserve space between adjacent spans when normalizedTexts is provided', () => {
+      // Simulates "John Martinez" where "John" and "Martinez" are detected separately
+      // Normalized string: "John Martinez" (offset 0–13)
+      const normalizedTexts = new Map<number, string>()
+      normalizedTexts.set(1, 'John Martinez')
+
+      const entities = [
+        makeEntity({
+          page: 1,
+          type: 'PERSON',
+          text: 'John',
+          textOffset: { start: 0, end: 4 },
+          confidence: 0.90,
+          quads: [[10, 10, 40, 10, 40, 22, 10, 22]],
+        }),
+        makeEntity({
+          page: 1,
+          type: 'PERSON',
+          text: 'Martinez',
+          textOffset: { start: 5, end: 13 },
+          confidence: 0.88,
+          quads: [[42, 10, 90, 10, 90, 22, 42, 22]],
+        }),
+      ]
+
+      const result = mergeEntities(entities, normalizedTexts)
+      expect(result).toHaveLength(1)
+      expect(result[0].text).toBe('John Martinez')
+      expect(result[0].textOffset.start).toBe(0)
+      expect(result[0].textOffset.end).toBe(13)
+    })
+
+    it('should preserve newline between adjacent spans on different lines', () => {
+      // Simulates "441 Birchwood Lane\nColumbus, OH 43201"
+      const normalizedTexts = new Map<number, string>()
+      normalizedTexts.set(1, '441 Birchwood Lane\nColumbus, OH 43201')
+
+      const entities = [
+        makeEntity({
+          page: 1,
+          type: 'STREET_ADDRESS',
+          text: '441 Birchwood Lane',
+          textOffset: { start: 0, end: 18 },
+          confidence: 0.90,
+          quads: [[10, 10, 130, 10, 130, 22, 10, 22]],
+        }),
+        makeEntity({
+          page: 1,
+          type: 'STREET_ADDRESS',
+          text: 'Columbus, OH 43201',
+          textOffset: { start: 19, end: 37 },
+          confidence: 0.92,
+          quads: [[10, 30, 130, 30, 130, 42, 10, 42]],
+        }),
+      ]
+
+      const result = mergeEntities(entities, normalizedTexts)
+      expect(result).toHaveLength(1)
+      expect(result[0].text).toBe('441 Birchwood Lane\nColumbus, OH 43201')
+    })
+
+    it('should fall back to space when normalizedTexts is not provided and gap exists', () => {
+      // No normalizedTexts — mergeAdjacent should insert ' ' fallback for gaps
+      const entities = [
+        makeEntity({
+          page: 1,
+          type: 'PERSON',
+          text: 'John',
+          textOffset: { start: 0, end: 4 },
+          confidence: 0.90,
+          quads: [[10, 10, 40, 10, 40, 22, 10, 22]],
+        }),
+        makeEntity({
+          page: 1,
+          type: 'PERSON',
+          text: 'Martinez',
+          textOffset: { start: 5, end: 13 },
+          confidence: 0.88,
+          quads: [[42, 10, 90, 10, 90, 22, 42, 22]],
+        }),
+      ]
+
+      const result = mergeEntities(entities)
+      expect(result).toHaveLength(1)
+      expect(result[0].text).toBe('John Martinez')
+    })
+
+    it('should NOT insert separator when spans are touching (no gap)', () => {
+      // Offsets: [0,4) and [4,12) — touching, no gap
+      const normalizedTexts = new Map<number, string>()
+      normalizedTexts.set(1, 'JohnMartinez')
+
+      const entities = [
+        makeEntity({
+          page: 1,
+          type: 'PERSON',
+          text: 'John',
+          textOffset: { start: 0, end: 4 },
+          confidence: 0.90,
+          quads: [[10, 10, 40, 10, 40, 22, 10, 22]],
+        }),
+        makeEntity({
+          page: 1,
+          type: 'PERSON',
+          text: 'Martinez',
+          textOffset: { start: 4, end: 12 },
+          confidence: 0.88,
+          quads: [[40, 10, 90, 10, 90, 22, 40, 22]],
+        }),
+      ]
+
+      const result = mergeEntities(entities, normalizedTexts)
+      expect(result).toHaveLength(1)
+      expect(result[0].text).toBe('JohnMartinez')
+    })
+  })
 })
