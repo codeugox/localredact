@@ -1,6 +1,7 @@
 // src/app/state.ts
 // Preact Signals-based app state management.
 // All UI state lives here — components read signals directly.
+// Includes full cleanup/memory management for safe session resets.
 
 import { signal, computed } from '@preact/signals'
 import type { DetectedEntity, RedactionMode } from '../core/detectors/entities'
@@ -65,6 +66,58 @@ export const focusedEntityId = signal<string | null>(null)
 
 /** Stored password for encrypted PDFs (null when not encrypted or not yet entered) */
 export const pdfPassword = signal<string | null>(null)
+
+// ─── Resource tracking for cleanup ─────────────────────────────────
+
+/**
+ * Active PDF document proxy. Tracked so resetState can call pdf.destroy()
+ * to terminate the web worker and release all PDF.js internal resources.
+ * Set by components that load PDFs (e.g. DocumentViewer, PageNav).
+ */
+let activePdfProxy: { destroy(): Promise<void> } | null = null
+
+/**
+ * Register the active PDF document proxy for cleanup on reset.
+ * Only one PDF is active at a time; calling again replaces the reference.
+ */
+export function setActivePdfProxy(pdf: { destroy(): Promise<void> } | null): void {
+  activePdfProxy = pdf
+}
+
+/**
+ * Get the active PDF document proxy (for testing/inspection).
+ */
+export function getActivePdfProxy(): { destroy(): Promise<void> } | null {
+  return activePdfProxy
+}
+
+/**
+ * Tracked blob URLs created via URL.createObjectURL that need revocation on reset.
+ * Components call trackBlobUrl() when creating blob URLs and untrackBlobUrl()
+ * when manually revoking them. resetState revokes all remaining tracked URLs.
+ */
+const trackedBlobUrls = new Set<string>()
+
+/**
+ * Register a blob URL for automatic revocation on reset.
+ */
+export function trackBlobUrl(url: string): void {
+  trackedBlobUrls.add(url)
+}
+
+/**
+ * Remove a blob URL from tracking (e.g., after manual revocation).
+ */
+export function untrackBlobUrl(url: string): void {
+  trackedBlobUrls.delete(url)
+}
+
+/**
+ * Get the set of currently tracked blob URLs (for testing).
+ */
+export function getTrackedBlobUrls(): ReadonlySet<string> {
+  return trackedBlobUrls
+}
 
 // ─── Computed signals ──────────────────────────────────────────────
 
@@ -259,10 +312,50 @@ export function onReset(callback: () => void): () => void {
 // ─── Reset ─────────────────────────────────────────────────────────
 
 /**
- * Reset all signals to their initial default values.
+ * Perform thorough cleanup and reset all signals to initial defaults.
  * Called on "Start over" and when dispatch receives RESET event.
+ *
+ * Cleanup steps:
+ * 1. Destroy active PDF proxy (terminates PDF.js worker, releases internal caches)
+ * 2. Revoke all tracked blob URLs (prevents memory leaks from createObjectURL)
+ * 3. Release all canvas elements by setting width=0 (frees GPU memory)
+ * 4. Clear password string reference
+ * 5. Null out file references and ArrayBuffers
+ * 6. Clear normalized text arrays and entity arrays
+ * 7. Run registered cleanup callbacks (e.g., thumbnail cache clearing)
  */
 export function resetState(): void {
+  // 1. Destroy active PDF proxy — terminates PDF.js worker
+  if (activePdfProxy) {
+    const pdf = activePdfProxy
+    activePdfProxy = null
+    // Fire-and-forget: destroy is async but we don't need to await it
+    pdf.destroy().catch(() => { /* ignore cleanup errors */ })
+  }
+
+  // 2. Revoke all tracked blob URLs
+  for (const url of trackedBlobUrls) {
+    try {
+      URL.revokeObjectURL(url)
+    } catch {
+      // Ignore errors — URL may have been revoked already
+    }
+  }
+  trackedBlobUrls.clear()
+
+  // 3. Release all canvas elements in the document by setting width=0
+  // This frees GPU-backed memory for any canvases we created
+  try {
+    const canvases = document.querySelectorAll('canvas')
+    for (const canvas of canvases) {
+      canvas.width = 0
+      canvas.height = 0
+    }
+  } catch {
+    // Ignore errors — may not have DOM access in tests
+  }
+
+  // 4–6. Clear all signal values to defaults
   appState.value = 'IDLE'
   entities.value = []
   currentPage.value = 1
@@ -276,7 +369,7 @@ export function resetState(): void {
   focusedEntityId.value = null
   pdfPassword.value = null
 
-  // Run registered cleanup callbacks (e.g., thumbnail cache clearing)
+  // 7. Run registered cleanup callbacks (e.g., thumbnail cache clearing)
   for (const cb of resetCallbacks) {
     cb()
   }

@@ -14,6 +14,8 @@ import {
   keepCount,
   uncertainCount,
   pdfPassword,
+  trackBlobUrl,
+  untrackBlobUrl,
 } from '../app/state'
 import { getOutputFilename } from '../utils/filename'
 
@@ -50,6 +52,7 @@ async function handleDownload(): Promise<void> {
 
     // Trigger browser download via invisible <a> element
     const url = URL.createObjectURL(blob)
+    trackBlobUrl(url)
     const a = document.createElement('a')
     a.href = url
     a.download = getOutputFilename(file.name)
@@ -57,8 +60,12 @@ async function handleDownload(): Promise<void> {
     a.click()
     document.body.removeChild(a)
 
-    // Revoke the object URL after a short delay to allow the download to start
-    setTimeout(() => URL.revokeObjectURL(url), 1000)
+    // Revoke the object URL after a short delay to allow the download to start.
+    // Also untrack it so resetState doesn't double-revoke.
+    setTimeout(() => {
+      URL.revokeObjectURL(url)
+      untrackBlobUrl(url)
+    }, 1000)
 
     dispatch({ type: 'REDACTION_COMPLETE' })
   } catch (err) {
