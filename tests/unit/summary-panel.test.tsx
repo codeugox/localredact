@@ -96,7 +96,7 @@ describe('SummaryPanel', () => {
   // ─── Entity list groups ─────────────────────────────────────────
 
   describe('entity list groups', () => {
-    it('should render three groups: Removing, Keeping, Your decision', () => {
+    it('should render three groups: Removing, Keeping, Your decision with count chips', () => {
       entities.value = [
         makeEntity({ id: 'e1', decision: 'REDACT', type: 'US_SSN' }),
         makeEntity({ id: 'e2', decision: 'KEEP', type: 'MONEY' }),
@@ -106,9 +106,14 @@ describe('SummaryPanel', () => {
 
       const labels = container.querySelectorAll('.group-label')
       const labelTexts = Array.from(labels).map((l) => l.textContent?.trim())
-      expect(labelTexts).toContain('Removing')
-      expect(labelTexts).toContain('Keeping')
-      expect(labelTexts).toContain('Your decision')
+      // Group labels now include count chips (e.g., "Removing1")
+      expect(labelTexts.some((t) => t?.startsWith('Removing'))).toBe(true)
+      expect(labelTexts.some((t) => t?.startsWith('Keeping'))).toBe(true)
+      expect(labelTexts.some((t) => t?.startsWith('Your decision'))).toBe(true)
+
+      // Verify count chips exist within group labels
+      const countChips = container.querySelectorAll('.group-label .group-count')
+      expect(countChips.length).toBe(3)
     })
 
     it('should show red pip for Removing entities', () => {
