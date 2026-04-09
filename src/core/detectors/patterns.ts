@@ -212,12 +212,20 @@ export const PASSPORT_CONTEXT =
 // ──────────────────────────────────────────────────
 
 /**
- * Person name value: 1-4 capitalized words, allowing hyphens and apostrophes.
+ * Person name value: 1-3 capitalized words, allowing hyphens and apostrophes.
  * Matches: "Emily Chen", "Sarah Mitchell", "John O'Brien",
  *          "Mary Jane Watson-Smith", "Robert J. Martinez"
+ * Limited to 3 words max (first + middle + last) so form labels like
+ * "Account Holder" are not consumed as part of the name match, keeping
+ * them available in the 80-char lookbehind window for context scoring.
+ *
+ * Uses [^\S\n]+ instead of \s+ so the regex never matches across newlines.
+ * This prevents the greedy quantifier from grabbing words on the next line
+ * (e.g., "James Rodriguez\nAccount Number"), which would be rejected by
+ * the singleLine check and cause the name to be skipped entirely.
  */
 export const PERSON_NAME_VALUE =
-  /\b[A-Z][a-z]+(?:[-'][A-Z][a-z]+)*(?:\s+[A-Z]\.?)?(?:\s+[A-Z][a-z]+(?:[-'][A-Z][a-z]+)*){0,3}\b/g
+  /\b[A-Z][a-z]+(?:[-'][A-Z][a-z]+)*(?:[^\S\n]+[A-Z]\.?)?(?:[^\S\n]+[A-Z][a-z]+(?:[-'][A-Z][a-z]+)*){0,2}\b/g
 
 /**
  * Person name context labels: common form labels that precede a person's name.
