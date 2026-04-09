@@ -5,7 +5,7 @@
 // Handles page rendering when currentPage signal changes.
 
 import { useEffect, useRef, useCallback } from 'preact/hooks'
-import { currentPage, entitiesForCurrentPage, currentFile, entities, pdfPassword } from '../app/state'
+import { currentPage, entitiesForCurrentPage, currentFile, entities, pdfPassword, setActivePdfProxy } from '../app/state'
 import { PREVIEW_SCALE } from '../core/redactor/rasterizer'
 import { HighlightGroup } from './HighlightGroup'
 import { EntityTooltip } from './EntityTooltip'
@@ -145,6 +145,8 @@ export function DocumentViewer() {
           return
         }
         pdfRef.current = { pdf: result.pdf }
+        // Register the PDF proxy for cleanup on state reset
+        setActivePdfProxy(result.pdf)
         // Trigger a re-render by setting viewport to null
         // The page render effect will pick it up
         pageViewport.value = null
@@ -159,8 +161,10 @@ export function DocumentViewer() {
     return () => {
       cancelled = true
       if (pdfRef.current) {
-        pdfRef.current.pdf.destroy()
+        const pdf = pdfRef.current.pdf
         pdfRef.current = null
+        setActivePdfProxy(null)
+        pdf.destroy()
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -181,11 +185,17 @@ export function DocumentViewer() {
       renderTaskRef.current = null
     }
 
+    // Release previous page's canvas content before rendering new page.
+    // Setting width/height to 0 frees GPU-backed memory, then we resize
+    // to the new page dimensions below.
+    const canvas = canvasRef.current
+    canvas.width = 0
+    canvas.height = 0
+
     try {
       const pdfPage = await pdfRef.current.pdf.getPage(currentPage.value)
       const viewport = pdfPage.getViewport({ scale: PREVIEW_SCALE })
 
-      const canvas = canvasRef.current
       canvas.width = Math.floor(viewport.width)
       canvas.height = Math.floor(viewport.height)
 
