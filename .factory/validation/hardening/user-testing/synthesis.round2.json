@@ -1,0 +1,32 @@
+{
+  "milestone": "hardening",
+  "round": 2,
+  "status": "fail",
+  "assertionsSummary": {
+    "total": 3,
+    "passed": 2,
+    "failed": 1,
+    "blocked": 0
+  },
+  "selectionDetails": {
+    "source": "re-run: previous failed/blocked assertions plus any new assertions from newly completed fix features",
+    "selectedAssertions": [
+      "VAL-EDGE-003",
+      "VAL-SEC-001",
+      "VAL-SEC-005"
+    ]
+  },
+  "passedAssertions": [
+    "VAL-EDGE-003",
+    "VAL-SEC-005"
+  ],
+  "failedAssertions": [
+    {
+      "id": "VAL-SEC-001",
+      "reason": "CSP connect-src is correctly set to 'none', but 6 same-origin script/worker network requests were recorded after baseline during upload\u2192review\u2192download."
+    }
+  ],
+  "blockedAssertions": [],
+  "appliedUpdates": [],
+  "previousRound": ".factory/validation/hardening/user-testing/synthesis.round1.json"
+}

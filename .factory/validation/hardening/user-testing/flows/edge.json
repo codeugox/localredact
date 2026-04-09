@@ -1,0 +1,147 @@
+{
+  "groupId": "edge",
+  "testedAt": "2026-04-09T12:19:32Z",
+  "isolation": {
+    "missionDir": "/Users/macbookpro/.factory/missions/03700c5a-5a07-4ab7-b688-0280f2e4ac86",
+    "appUrl": "http://localhost:5173",
+    "evidenceRoot": "/Users/macbookpro/.factory/missions/03700c5a-5a07-4ab7-b688-0280f2e4ac86/evidence/hardening/edge"
+  },
+  "toolsUsed": [
+    "agent-browser",
+    "node"
+  ],
+  "assertions": [
+    {
+      "id": "VAL-EDGE-001",
+      "title": "No-text / scanned PDF shows user-friendly error",
+      "status": "pass",
+      "reason": "Uploading an image-only PDF produced the scanned-document guidance message and kept the app on a usable drop screen.",
+      "steps": [
+        {
+          "action": "Upload edge-scanned-image-only.pdf",
+          "expected": "User-friendly scanned/no-text message and no crash",
+          "observed": "Message containing 'scanned images' displayed; drop screen remained functional"
+        },
+        {
+          "action": "Check browser errors",
+          "expected": "No unhandled errors",
+          "observed": "No additional page errors reported by agent-browser errors"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "hardening/edge/VAL-EDGE-001-scanned-error.png"
+        ],
+        "consoleErrors": "none observed during assertion run",
+        "artifacts": [
+          "hardening/edge/edge-scanned-image-only.pdf"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-EDGE-002",
+      "title": "Rapid repeated file drops do not break state",
+      "status": "pass",
+      "reason": "A quick mixed sequence (invalid then valid) resulted in the latest valid PDF being processed to preview with responsive UI and no corrupted state.",
+      "steps": [
+        {
+          "action": "Upload edge-invalid.txt then immediately upload edge-valid-b.pdf",
+          "expected": "Latest drop handled; app remains responsive",
+          "observed": "App transitioned to preview for the valid PDF; action bar and viewer loaded normally"
+        },
+        {
+          "action": "Check browser errors",
+          "expected": "No unhandled exceptions",
+          "observed": "No additional page errors reported by agent-browser errors"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "hardening/edge/VAL-EDGE-002-rapid-drops-result.png"
+        ],
+        "consoleErrors": "none observed during assertion run",
+        "artifacts": [
+          "hardening/edge/edge-invalid.txt",
+          "hardening/edge/edge-valid-b.pdf"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-EDGE-003",
+      "title": "Memory pressure — DPI fallback on canvas failure",
+      "status": "fail",
+      "reason": "The required fallback warning+successful reduced-resolution output behavior was not reliably achieved in-browser.",
+      "steps": [
+        {
+          "action": "Upload oversized fixtures and trigger Download redacted PDF",
+          "expected": "300 DPI render fails, retries at 240 DPI, warning shown, output produced",
+          "observed": "For edge-large-page-wide-4000x1000.pdf, output completed but no reduced-quality warning appeared; for larger fixtures, flow returned to drop screen with runtime error messages"
+        },
+        {
+          "action": "Inspect console",
+          "expected": "Fallback warning evidence",
+          "observed": "Console captured jsPDF runtime failures (e.g., 'RangeError: Invalid string length') during failing oversized runs"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "hardening/edge/VAL-EDGE-003-dpi-fallback-done.png",
+          "hardening/edge/VAL-EDGE-003-dpi-fallback-fail.png"
+        ],
+        "consoleErrors": "Error in function Array.join (: Invalid string length RangeError: Invalid string length ... at finalizeDoc ...",
+        "artifacts": [
+          "hardening/edge/edge-large-page-wide-4000x1000.pdf",
+          "hardening/edge/edge-large-page-wide-9000x1000.pdf",
+          "hardening/edge/21f8e5df-4afb-4326-8735-12a777f0dfa5",
+          "hardening/edge/7c90ce02-94f7-4a53-92af-9d627716609a"
+        ]
+      },
+      "issues": "Fallback warning text ('Reduced output quality...') was not observed on the done screen in successful oversized output run; larger stress cases produced runtime errors instead of graceful fallback completion."
+    },
+    {
+      "id": "VAL-EDGE-004",
+      "title": "Graceful handling of corrupted PDF",
+      "status": "pass",
+      "reason": "Uploading a renamed-JPEG-as-.pdf showed a user-facing validation error and left the app on a usable drop screen without stack trace leakage.",
+      "steps": [
+        {
+          "action": "Upload edge-renamed-jpeg.pdf",
+          "expected": "User-friendly error and usable drop screen",
+          "observed": "Error text 'Invalid PDF structure.' shown on drop screen; UI remained interactive"
+        },
+        {
+          "action": "Check browser errors",
+          "expected": "No crash-level unhandled exceptions",
+          "observed": "No additional page errors reported by agent-browser errors"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "hardening/edge/VAL-EDGE-004-corrupted-pdf-error.png"
+        ],
+        "consoleErrors": "none observed during assertion run",
+        "artifacts": [
+          "hardening/edge/edge-renamed-jpeg.pdf"
+        ]
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [
+    {
+      "description": "The upload control is hidden (`input[type=file]`), so automation required temporarily exposing it via in-page script before using upload commands.",
+      "resolved": true,
+      "resolution": "Set inline style on input to make it interactable, then uploaded fixtures.",
+      "affectedAssertions": [
+        "VAL-EDGE-001",
+        "VAL-EDGE-002",
+        "VAL-EDGE-003",
+        "VAL-EDGE-004"
+      ]
+    }
+  ],
+  "blockers": [],
+  "summary": "Tested 4 edge assertions: 3 passed (VAL-EDGE-001, VAL-EDGE-002, VAL-EDGE-004), 1 failed (VAL-EDGE-003) due missing fallback-warning behavior and instability under larger stress fixtures."
+}

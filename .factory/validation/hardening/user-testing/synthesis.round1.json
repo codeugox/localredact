@@ -1,0 +1,52 @@
+{
+  "milestone": "hardening",
+  "round": 1,
+  "status": "fail",
+  "assertionsSummary": {
+    "total": 10,
+    "passed": 7,
+    "failed": 3,
+    "blocked": 0
+  },
+  "selectionDetails": {
+    "source": "features[].fulfills for completed implementation features in milestone=hardening intersected with pending assertions in validation-state.json",
+    "selectedAssertions": [
+      "VAL-EDGE-001",
+      "VAL-EDGE-002",
+      "VAL-EDGE-003",
+      "VAL-EDGE-004",
+      "VAL-SEC-001",
+      "VAL-SEC-002",
+      "VAL-SEC-003",
+      "VAL-SEC-004",
+      "VAL-SEC-005",
+      "VAL-SEC-006"
+    ]
+  },
+  "passedAssertions": [
+    "VAL-EDGE-001",
+    "VAL-EDGE-002",
+    "VAL-EDGE-004",
+    "VAL-SEC-002",
+    "VAL-SEC-003",
+    "VAL-SEC-004",
+    "VAL-SEC-006"
+  ],
+  "failedAssertions": [
+    {
+      "id": "VAL-EDGE-003",
+      "reason": "The required fallback warning+successful reduced-resolution output behavior was not reliably achieved in-browser."
+    },
+    {
+      "id": "VAL-SEC-001",
+      "reason": "After clearing baseline network logs, processing+download generated local script/worker requests; CSP connect-src was not 'none'."
+    },
+    {
+      "id": "VAL-SEC-005",
+      "reason": "UI reset and second upload succeeded, but no explicit cleanup confirmation log was emitted in console."
+    }
+  ],
+  "blockedAssertions": [],
+  "appliedUpdates": [],
+  "previousRound": null
+}
