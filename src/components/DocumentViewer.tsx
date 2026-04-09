@@ -4,12 +4,14 @@
 // For each entity on the current page, renders a HighlightGroup.
 // Handles page rendering when currentPage signal changes.
 
-import { useEffect, useRef } from 'preact/hooks'
-import { currentPage, entitiesForCurrentPage, currentFile } from '../app/state'
+import { useEffect, useRef, useCallback } from 'preact/hooks'
+import { currentPage, entitiesForCurrentPage, currentFile, entities } from '../app/state'
 import { PREVIEW_SCALE } from '../core/redactor/rasterizer'
 import { HighlightGroup } from './HighlightGroup'
+import { EntityTooltip } from './EntityTooltip'
 import type { Viewport } from '../utils/coords'
 import { signal } from '@preact/signals'
+import type { DetectedEntity } from '../core/detectors/entities'
 
 // ─── Internal signals for canvas dimensions ─────────────────────────
 
@@ -21,6 +23,12 @@ const canvasHeight = signal<number>(0)
 
 /** PDF.js viewport for coordinate transforms (updated after page render) */
 const pageViewport = signal<Viewport | null>(null)
+
+/** Tooltip state: entity being hovered, position, flip */
+const tooltipEntity = signal<DetectedEntity | null>(null)
+const tooltipX = signal<number>(0)
+const tooltipY = signal<number>(0)
+const tooltipFlipped = signal<boolean>(false)
 
 // ─── Component ──────────────────────────────────────────────────────
 
@@ -34,6 +42,7 @@ const pageViewport = signal<Viewport | null>(null)
  */
 export function DocumentViewer() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const viewportRef = useRef<HTMLDivElement>(null)
   const pdfRef = useRef<{ pdf: import('pdfjs-dist').PDFDocumentProxy } | null>(null)
   const renderTaskRef = useRef<{ cancel: () => void } | null>(null)
 
@@ -43,6 +52,34 @@ export function DocumentViewer() {
   const vp = pageViewport.value
   const cw = canvasWidth.value
   const ch = canvasHeight.value
+  const hoveredEntity = tooltipEntity.value
+  const ttX = tooltipX.value
+  const ttY = tooltipY.value
+  const ttFlipped = tooltipFlipped.value
+
+  // ─── Tooltip handlers ───────────────────────────────────────────
+
+  const handleHighlightEnter = useCallback((entityId: string, rect: DOMRect) => {
+    const entity = entities.value.find((e) => e.id === entityId)
+    if (!entity) return
+
+    const viewportEl = viewportRef.current
+    if (!viewportEl) return
+
+    const viewportRect = viewportEl.getBoundingClientRect()
+    const x = rect.left + rect.width / 2 - viewportRect.left + viewportEl.scrollLeft
+    const y = rect.top - viewportRect.top + viewportEl.scrollTop
+    const flipped = rect.top - viewportRect.top < 80
+
+    tooltipEntity.value = entity
+    tooltipX.value = x
+    tooltipY.value = flipped ? y + rect.height : y
+    tooltipFlipped.value = flipped
+  }, [])
+
+  const handleHighlightLeave = useCallback(() => {
+    tooltipEntity.value = null
+  }, [])
 
   // Load PDF when file changes
   useEffect(() => {
@@ -135,7 +172,7 @@ export function DocumentViewer() {
   }
 
   return (
-    <div class="doc-viewport">
+    <div class="doc-viewport" ref={viewportRef}>
       <div class="doc-viewport-inner">
         <canvas ref={canvasRef} />
         {vp && cw > 0 && ch > 0 && (
@@ -159,9 +196,20 @@ export function DocumentViewer() {
                 decision={entity.decision}
                 quads={entity.quads}
                 viewport={vp}
+                onMouseEnter={handleHighlightEnter}
+                onMouseLeave={handleHighlightLeave}
               />
             ))}
           </svg>
+        )}
+        {/* Tooltip — shown on hover over a highlight */}
+        {hoveredEntity && (
+          <EntityTooltip
+            entity={hoveredEntity}
+            x={ttX}
+            y={ttY}
+            flipped={ttFlipped}
+          />
         )}
       </div>
     </div>

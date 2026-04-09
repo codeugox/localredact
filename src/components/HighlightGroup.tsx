@@ -8,7 +8,7 @@
 import type { Quad, RedactionDecision, EntityType } from '../core/detectors/entities'
 import type { Viewport } from '../utils/coords'
 import { quadToCanvas, quadToRect } from '../utils/coords'
-import { dispatch, focusedEntity } from '../app/state'
+import { dispatch, focusedEntity, focusedEntityId } from '../app/state'
 
 // ─── Props ──────────────────────────────────────────────────────────
 
@@ -23,6 +23,10 @@ export interface HighlightGroupProps {
   quads: Quad[]
   /** PDF.js viewport for coordinate transformation */
   viewport: Viewport
+  /** Callback when mouse enters a highlight rect (for tooltip) */
+  onMouseEnter?: (entityId: string, rect: DOMRect) => void
+  /** Callback when mouse leaves a highlight rect (for tooltip) */
+  onMouseLeave?: () => void
 }
 
 // ─── Decision → CSS class mapping ───────────────────────────────────
@@ -50,13 +54,24 @@ export function HighlightGroup({
   decision,
   quads,
   viewport,
+  onMouseEnter,
+  onMouseLeave,
 }: HighlightGroupProps) {
   const decisionClass = DECISION_CLASS[decision]
-  const isFocused = focusedEntity.value === entityType
+  const isFocused =
+    focusedEntityId.value === entityId || focusedEntity.value === entityType
   const cssClass = isFocused ? `${decisionClass} hl-focused` : decisionClass
 
   const handleClick = () => {
     dispatch({ type: 'TOGGLE_ENTITY', entityId })
+  }
+
+  const handleMouseEnter = (e: MouseEvent) => {
+    if (onMouseEnter) {
+      const target = e.currentTarget as SVGElement
+      const rect = target.getBoundingClientRect()
+      onMouseEnter(entityId, rect)
+    }
   }
 
   return (
@@ -65,6 +80,8 @@ export function HighlightGroup({
       data-entity-id={entityId}
       data-decision={decision}
       onClick={handleClick}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={onMouseLeave}
     >
       {quads.map((quad, i) => {
         const canvasQuad = quadToCanvas(quad, viewport)

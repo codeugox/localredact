@@ -60,6 +60,9 @@ export const indexedPages = signal<IndexedPage[]>([])
 /** Currently focused entity type in the sidebar (null when no focus) */
 export const focusedEntity = signal<string | null>(null)
 
+/** Currently focused entity ID for keyboard nav and tooltip (null when no focus) */
+export const focusedEntityId = signal<string | null>(null)
+
 // ─── Computed signals ──────────────────────────────────────────────
 
 /** Count of entities with REDACT decision */
@@ -97,6 +100,9 @@ export type AppEvent =
   | { type: 'TOGGLE_ENTITY'; entityId: string }
   | { type: 'SET_MODE'; mode: RedactionMode }
   | { type: 'FOCUS_ENTITY'; entityType: string }
+  | { type: 'FOCUS_ENTITY_ID'; entityId: string }
+  | { type: 'SET_PAGE'; page: number }
+  | { type: 'SET_ENTITY_DECISION'; entityId: string; decision: DetectedEntity['decision'] }
   | { type: 'REDACTION_START' }
   | { type: 'REDACTION_PROGRESS'; page: number; total: number }
   | { type: 'REDACTION_COMPLETE' }
@@ -172,6 +178,34 @@ export function dispatch(event: AppEvent): void {
       break
     }
 
+    case 'FOCUS_ENTITY_ID': {
+      focusedEntityId.value = event.entityId
+      // Also update focusedEntity type for sidebar highlighting
+      const focusTarget = entities.value.find((e) => e.id === event.entityId)
+      if (focusTarget) {
+        focusedEntity.value = focusTarget.type
+      }
+      break
+    }
+
+    case 'SET_PAGE': {
+      if (event.page >= 1 && event.page <= totalPages.value) {
+        currentPage.value = event.page
+      }
+      break
+    }
+
+    case 'SET_ENTITY_DECISION': {
+      const decIdx = entities.value.findIndex((e) => e.id === event.entityId)
+      if (decIdx === -1) break
+
+      const decEntity = entities.value[decIdx]
+      const decUpdated = [...entities.value]
+      decUpdated[decIdx] = { ...decEntity, decision: event.decision }
+      entities.value = decUpdated
+      break
+    }
+
     case 'REDACTION_START': {
       appState.value = 'PROCESSING'
       processingProgress.value = { page: 0, total: 0 }
@@ -218,4 +252,5 @@ export function resetState(): void {
   processingProgress.value = { page: 0, total: 0 }
   indexedPages.value = []
   focusedEntity.value = null
+  focusedEntityId.value = null
 }
