@@ -5,7 +5,7 @@
 // Handles page rendering when currentPage signal changes.
 
 import { useEffect, useRef, useCallback } from 'preact/hooks'
-import { currentPage, entitiesForCurrentPage, currentFile, entities } from '../app/state'
+import { currentPage, entitiesForCurrentPage, currentFile, entities, pdfPassword } from '../app/state'
 import { PREVIEW_SCALE } from '../core/redactor/rasterizer'
 import { HighlightGroup } from './HighlightGroup'
 import { EntityTooltip } from './EntityTooltip'
@@ -81,18 +81,27 @@ export function DocumentViewer() {
     tooltipEntity.value = null
   }, [])
 
-  // Load PDF when file changes
+  // Load PDF when file changes — pass stored password for encrypted PDFs
   useEffect(() => {
     if (!file) return
 
     let cancelled = false
+    const storedPassword = pdfPassword.value
 
     async function loadPdf() {
       const { loadPDF } = await import('../core/pdf/loader')
       if (cancelled) return
 
       try {
-        const result = await loadPDF(file!)
+        // If we have a stored password from the detection phase,
+        // pass it as an onPassword callback that auto-responds
+        const onPassword = storedPassword
+          ? (updatePassword: (pw: string) => void) => {
+              updatePassword(storedPassword)
+            }
+          : undefined
+
+        const result = await loadPDF(file!, onPassword)
         if (cancelled) {
           await result.pdf.destroy()
           return

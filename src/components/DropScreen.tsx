@@ -1,9 +1,9 @@
 // src/components/DropScreen.tsx
 // File drop zone with drag-and-drop, file validation, mode selector,
-// trust statement, error display, and password modal for encrypted PDFs.
+// trust statement, and error display. Password modal is mounted at
+// App.tsx level for global accessibility.
 
 import { useRef, useCallback } from 'preact/hooks'
-import { signal } from '@preact/signals'
 import {
   dispatch,
   currentMode,
@@ -12,26 +12,15 @@ import {
 } from '../app/state'
 import { validateFile } from '../core/pdf/loader'
 import { ErrorMessage } from './ErrorMessage'
-import { PasswordModal } from './PasswordModal'
+import { createOnPasswordCallback, hidePasswordModal } from '../app/password-prompt'
 import type { RedactionMode } from '../core/detectors/entities'
 
 /** Maximum number of files accepted in a single drop. */
 const MAX_FILES = 1
 
-// ─── Password modal state ──────────────────────────────────────────
-
-/** Whether the password modal is currently visible */
-const showPasswordModal = signal(false)
-
-/** The reason code from PDF.js (1 = need password, 2 = incorrect) */
-const passwordReason = signal<number>(1)
-
-/** Stored reference to the PDF.js updatePassword callback */
-let pendingPasswordCallback: ((password: string) => void) | null = null
-
 /**
  * Process a valid file: dispatch SET_FILE and trigger detection pipeline.
- * Wires the onPassword callback to show the PasswordModal.
+ * Wires the onPassword callback to show the global PasswordModal.
  */
 async function handleValidFile(file: File): Promise<void> {
   dispatch({ type: 'SET_FILE', file })
@@ -45,13 +34,12 @@ async function handleValidFile(file: File): Promise<void> {
       (page, total) => {
         dispatch({ type: 'DETECTION_PROGRESS', page, total })
       },
-      (updatePassword, reason) => {
-        // Store the callback and show the modal
-        pendingPasswordCallback = updatePassword
-        passwordReason.value = reason
-        showPasswordModal.value = true
-      }
+      createOnPasswordCallback()
     )
+
+    // Detection succeeded — hide password modal if it was shown
+    hidePasswordModal()
+
     dispatch({
       type: 'DETECTION_COMPLETE',
       entities: result.entities,
@@ -153,39 +141,11 @@ export function DropScreen() {
     dispatch({ type: 'SET_MODE', mode })
   }, [])
 
-  // ─── Password modal handlers ──────────────────────────────────
-
-  const handlePasswordSubmit = useCallback((password: string) => {
-    if (pendingPasswordCallback) {
-      pendingPasswordCallback(password)
-      // Don't hide the modal yet — if the password is wrong,
-      // onPassword will be called again with INCORRECT_PASSWORD reason.
-      // If correct, the detection pipeline will continue and the modal
-      // will be hidden when the state changes to NEEDS_REVIEW.
-    }
-  }, [])
-
-  const handlePasswordCancel = useCallback(() => {
-    showPasswordModal.value = false
-    pendingPasswordCallback = null
-    dispatch({ type: 'RESET' })
-  }, [])
-
   const mode = currentMode.value
   const errorMessage = error.value
-  const isPasswordModalVisible = showPasswordModal.value
-  const passwordReasonValue = passwordReason.value
 
   return (
     <div class="app-main">
-      {/* Password modal overlay */}
-      {isPasswordModalVisible && (
-        <PasswordModal
-          reason={passwordReasonValue}
-          onSubmit={handlePasswordSubmit}
-          onCancel={handlePasswordCancel}
-        />
-      )}
       <div class="container-sm anim-rise">
         {/* Headline */}
         <div class="headline">

@@ -13,6 +13,7 @@ import {
   redactCount,
   keepCount,
   uncertainCount,
+  pdfPassword,
 } from '../app/state'
 import { getOutputFilename } from '../utils/filename'
 
@@ -28,12 +29,23 @@ async function handleDownload(): Promise<void> {
 
   try {
     const { redactDocument } = await import('../core/pipeline/redact-document')
+
+    // If we have a stored password from the detection phase,
+    // pass it as an onPassword callback that auto-responds
+    const storedPassword = pdfPassword.value
+    const onPassword = storedPassword
+      ? (updatePassword: (pw: string) => void) => {
+          updatePassword(storedPassword)
+        }
+      : undefined
+
     const blob = await redactDocument(
       file,
       entities.value,
       (page, total) => {
         dispatch({ type: 'REDACTION_PROGRESS', page, total })
-      }
+      },
+      onPassword
     )
 
     // Trigger browser download via invisible <a> element
