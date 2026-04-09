@@ -417,6 +417,13 @@ export function DropScreen() {
           <strong>Zero bytes transmitted.</strong> Runs in your tab. Open{' '}
           <code>DevTools → Network</code> to confirm.
         </p>
+
+        {/* Footer links */}
+        <div class="drop-footer">
+          <a class="drop-footer-link" href="/faq.html">FAQ</a>
+          <span class="drop-footer-sep">·</span>
+          <a class="drop-footer-link" href="#">Source</a>
+        </div>
       </div>
     </div>
   )

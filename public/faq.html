@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Frequently asked questions about Local Redact — browser-based PII redaction for PDFs.">
+  <title>FAQ — Local Redact</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <style>
+    /* ── System font stack (matches app) ─────────────── */
+    :root {
+      --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI Variable", "Segoe UI",
+                 system-ui, ui-sans-serif, sans-serif;
+      --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Monaco, Consolas,
+                   monospace;
+
+      --bg:      #F4F1EC;
+      --surface: #FFFFFF;
+      --950:     #1C1812;
+      --700:     #4A4439;
+      --500:     #7B7368;
+      --400:     #9A9186;
+      --300:     #B5AFA8;
+      --200:     #D8D3CB;
+      --150:     #E5E1DA;
+      --100:     #EDEAE4;
+      --red:     #C41E1E;
+      --r-sm:    5px;
+      --r-md:    9px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { height: 100%; }
+
+    body {
+      background: var(--bg);
+      color: var(--950);
+      font-family: var(--font-ui);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* ── Nav ──────────────────────────────────────────── */
+    nav {
+      height: 54px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 44px;
+      border-bottom: 1px solid var(--150);
+      background: var(--bg);
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      flex-shrink: 0;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .mark { width: 20px; height: 26px; flex-shrink: 0; }
+
+    .wordmark {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: var(--950);
+      line-height: 1;
+    }
+
+    .wordmark-redact { color: var(--red); }
+
+    .nav-end {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .nav-link {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--400);
+      text-decoration: none;
+      letter-spacing: -0.01em;
+      transition: color 0.15s;
+    }
+
+    .nav-link:hover { color: var(--950); }
+
+    /* ── Main content ────────────────────────────────── */
+    main {
+      flex: 1;
+      padding: 48px 24px 72px;
+    }
+
+    .container {
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: var(--950);
+      margin-bottom: 8px;
+    }
+
+    .page-sub {
+      font-size: 14px;
+      color: var(--500);
+      margin-bottom: 36px;
+      line-height: 1.5;
+    }
+
+    /* ── FAQ accordion ───────────────────────────────── */
+    details {
+      border: 1px solid var(--150);
+      border-radius: var(--r-md);
+      background: var(--surface);
+      margin-bottom: 8px;
+      transition: border-color 0.15s;
+    }
+
+    details[open] {
+      border-color: var(--200);
+    }
+
+    summary {
+      padding: 16px 20px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--950);
+      cursor: pointer;
+      letter-spacing: -0.02em;
+      list-style: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      user-select: none;
+    }
+
+    summary::-webkit-details-marker { display: none; }
+
+    summary::after {
+      content: '+';
+      font-size: 18px;
+      font-weight: 400;
+      color: var(--300);
+      flex-shrink: 0;
+      margin-left: 16px;
+      transition: transform 0.2s ease;
+    }
+
+    details[open] summary::after {
+      content: '−';
+      color: var(--500);
+    }
+
+    summary:hover { color: var(--red); }
+
+    .faq-body {
+      padding: 0 20px 18px;
+      font-size: 13.5px;
+      line-height: 1.65;
+      color: var(--500);
+      letter-spacing: -0.01em;
+    }
+
+    .faq-body code {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      background: var(--100);
+      border: 1px solid var(--150);
+      padding: 1px 5px;
+      border-radius: 3px;
+      color: var(--400);
+    }
+
+    /* ── Footer ──────────────────────────────────────── */
+    footer {
+      border-top: 1px solid var(--150);
+      padding: 14px 44px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .footer-l {
+      font-size: 11px;
+      font-weight: 400;
+      color: var(--300);
+      letter-spacing: -0.01em;
+    }
+
+    .footer-r {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .footer-link {
+      font-size: 11px;
+      font-weight: 400;
+      color: var(--300);
+      text-decoration: none;
+      letter-spacing: -0.01em;
+    }
+
+    .footer-link:hover { color: var(--500); }
+
+    /* ── Responsive ──────────────────────────────────── */
+    @media (max-width: 600px) {
+      nav { padding: 0 20px; }
+      main { padding: 32px 16px 56px; }
+      footer { padding: 14px 20px; }
+      h1 { font-size: 22px; }
+      summary { padding: 14px 16px; font-size: 13px; }
+      .faq-body { padding: 0 16px 14px; font-size: 13px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Nav -->
+  <nav>
+    <a class="logo" href="/">
+      <svg class="mark" viewBox="0 0 20 26" fill="none" aria-hidden="true">
+        <rect x="0.75" y="0.75" width="18.5" height="24.5" rx="2"
+          fill="white" stroke="#D8D3CB" stroke-width="1.5"/>
+        <path d="M13.5 0.75 V6.25 H19" fill="#EDEAE4"
+          stroke="#D8D3CB" stroke-width="1.5" stroke-linejoin="round"/>
+        <rect x="3.5" y="3" width="7" height="1.5" rx="0.75" fill="#D8D3CB"/>
+        <rect x="3.5" y="6.5" width="10" height="1.5" rx="0.75" fill="#D8D3CB"/>
+        <rect x="0.75" y="11" width="18.5" height="5.5" fill="#1C1812"/>
+        <rect x="3.5" y="19.5" width="9" height="1.5" rx="0.75" fill="#D8D3CB"/>
+        <rect x="3.5" y="22.5" width="6" height="1.5" rx="0.75" fill="#D8D3CB"/>
+      </svg>
+      <span class="wordmark">local<span class="wordmark-redact">redact</span></span>
+    </a>
+    <div class="nav-end">
+      <a class="nav-link" href="/">← Back to app</a>
+    </div>
+  </nav>
+
+  <!-- Main -->
+  <main>
+    <div class="container">
+      <h1>Frequently Asked Questions</h1>
+      <p class="page-sub">Everything you need to know about Local Redact.</p>
+
+      <details>
+        <summary>What browsers are supported?</summary>
+        <div class="faq-body">
+          Chrome 118+, Firefox 115+, Safari 16.4+, and Edge 118+. All modern Chromium-based browsers work.
+          Internet Explorer is not supported. The app works best on desktop — mobile browsers can load the app
+          but the interface is optimized for larger screens.
+        </div>
+      </details>
+
+      <details>
+        <summary>Does it work on mobile?</summary>
+        <div class="faq-body">
+          The app will load on mobile browsers but is designed for desktop use. The review interface uses a sidebar
+          layout and hover tooltips that work best with a mouse or trackpad. We recommend using a laptop or desktop
+          for the best experience.
+        </div>
+      </details>
+
+      <details>
+        <summary>What about scanned or image-only PDFs?</summary>
+        <div class="faq-body">
+          Version 1.0 works with digital PDFs that have a text layer (most PDFs created from Word, Excel, or other
+          software). Scanned documents and image-only PDFs are not supported yet. Image/OCR support is planned for v1.2.
+        </div>
+      </details>
+
+      <details>
+        <summary>How do I verify nothing is sent to a server?</summary>
+        <div class="faq-body">
+          Open your browser's DevTools (F12 or Cmd+Option+I), go to the Network tab, and clear it. Then process a
+          document. You'll see zero outbound requests. The app enforces a Content Security Policy with
+          <code>connect-src: 'none'</code>, making it technically impossible for the app code to make network
+          requests after the page loads.
+        </div>
+      </details>
+
+      <details>
+        <summary>What types of PII does it detect?</summary>
+        <div class="faq-body">
+          Social Security Numbers (SSN), Individual Taxpayer IDs (ITIN), Employer IDs (EIN), credit card numbers
+          (with Luhn validation), phone numbers, email addresses, dates of birth, street addresses, city/state/ZIP,
+          bank account numbers, routing numbers, passport numbers, ZIP codes, driver's license numbers, dollar
+          amounts, and dates.
+        </div>
+      </details>
+
+      <details>
+        <summary>What if it misses something?</summary>
+        <div class="faq-body">
+          The review screen lets you see exactly what will be redacted before you download. Every detected item is
+          highlighted. You can toggle items between "redact" and "keep." If the detector misses something, you'll
+          see it's not highlighted during review. V1.1 will add AI-powered detection using a NER model for better
+          coverage.
+        </div>
+      </details>
+
+      <details>
+        <summary>Can I undo a redaction after downloading?</summary>
+        <div class="faq-body">
+          No. Redaction is irreversible by design. The output PDF is a rasterized image — the original text is
+          destroyed and replaced with solid black bars. This is the same approach used by professional redaction
+          tools. Always keep your original file.
+        </div>
+      </details>
+
+      <details>
+        <summary>What's the file size limit?</summary>
+        <div class="faq-body">
+          50 MB. Most documents are well under this. If your PDF is larger, consider splitting it into sections.
+        </div>
+      </details>
+
+      <details>
+        <summary>What's the difference between the two modes?</summary>
+        <div class="faq-body">
+          "Identity Only" redacts personal identifiers (SSN, name, address, phone, email, etc.) but keeps dollar
+          amounts visible. Use this for tax forms where you want to share financial data without personal details.
+          "Full Redaction" redacts everything including dollar amounts.
+        </div>
+      </details>
+
+      <details>
+        <summary>Is my password-protected PDF safe?</summary>
+        <div class="faq-body">
+          Yes. The password you enter is used locally by your browser to decrypt the PDF. It's never stored or
+          transmitted. The password is cleared from memory when you click "Start over" or close the tab.
+        </div>
+      </details>
+
+      <details>
+        <summary>Where is my data stored?</summary>
+        <div class="faq-body">
+          Nowhere. The app does not use localStorage, sessionStorage, IndexedDB, cookies, or any other browser
+          storage. When you close the tab or click "Start over," all data is gone.
+        </div>
+      </details>
+
+      <details>
+        <summary>Is this open source?</summary>
+        <div class="faq-body">
+          Yes. The full source code is available on GitHub. You can audit every line of code, build it yourself,
+          and host it on your own infrastructure.
+        </div>
+      </details>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <span class="footer-l">localredact.app &nbsp;·&nbsp; MIT</span>
+    <div class="footer-r">
+      <a class="footer-link" href="/">App</a>
+      <a class="footer-link" href="#">Source</a>
+    </div>
+  </footer>
+
+</body>
+</html>
