@@ -144,7 +144,7 @@ interface IndexedPage {
 App-level state enum (in `src/app/state.ts`):
 
 ```typescript
-type AppState = 'IDLE' | 'LOADING' | 'NEEDS_REVIEW' | 'PROCESSING' | 'DONE'
+type AppState = 'IDLE' | 'LOADING' | 'NEEDS_REVIEW' | 'PROCESSING' | 'DONE' | 'ERROR'
 ```
 
 ---
