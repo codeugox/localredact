@@ -9,6 +9,7 @@ import { useEffect, useCallback } from 'preact/hooks'
 import { DocumentViewer } from './DocumentViewer'
 import { SummaryPanel } from './SummaryPanel'
 import { DocToolbar, PageNav } from './PageNav'
+import { FooterBar } from './FooterBar'
 import { handleKeyboardShortcut, focusNextUncertain } from './KeyboardNav'
 import { uncertainCount } from '../app/state'
 
@@ -80,24 +81,21 @@ export function PreviewScreen() {
         {/* Document viewer with canvas + SVG overlay */}
         <DocumentViewer />
 
-        {/* Action bar with jump button */}
-        <div class="action-bar">
-          <div class="action-bar-left">
-            {/* Start over and count chips will be added by download-done-flow feature */}
+        {/* Footer bar with start over, counts, jump, and download */}
+        <FooterBar />
+
+        {/* Jump button overlay — shown only when uncertain entities exist */}
+        {uncertain > 0 && (
+          <div class="jump-bar">
+            <button
+              class="btn-jump"
+              onClick={handleJump}
+              type="button"
+            >
+              Go to next unresolved ↓
+            </button>
           </div>
-          <div class="action-bar-right">
-            {uncertain > 0 && (
-              <button
-                class="btn-jump"
-                onClick={handleJump}
-                type="button"
-              >
-                Go to next unresolved ↓
-              </button>
-            )}
-            {/* Download button will be added by download-done-flow feature */}
-          </div>
-        </div>
+        )}
       </div>
     </div>
   )
