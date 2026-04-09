@@ -1,0 +1,38 @@
+{
+  "featureId": "redaction-pipeline",
+  "reviewedAt": "2026-04-09T06:54:46Z",
+  "commitId": "017885a",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The feature adds the expected modules (rasterizer, burner, repackager, pipeline orchestrator, filename utility), but redactDocument does not meet the required per-page memory-release behavior.",
+    "issues": [
+      {
+        "file": "src/core/pipeline/redact-document.ts",
+        "line": 98,
+        "severity": "blocking",
+        "description": "The pipeline accumulates all rendered canvases in memory (`pageCanvases`) and only repackages/releases them after all pages are processed. This violates the sequential render→burn→embed→release requirement and can cause excessive memory growth on multi-page PDFs."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The engine-worker skill is missing explicit guidance that jsdom lacks a real HTMLCanvasElement 2D context and tests must mock canvas APIs.",
+      "evidence": "No jsdom/canvas guidance appears in .factory/skills/engine-worker/SKILL.md. The reviewed transcript skeleton explicitly notes: \"jsdom doesn't have a real canvas implementation\" and the worker had to rework tests around canvas mocking; handoff.skillFeedback also recommends adding this."
+    },
+    {
+      "area": "conventions",
+      "observation": "AGENTS.md includes a jsPDF metadata example that sets `producer`, but strict TypeScript typings for jsPDF DocumentProperties omit that field, creating avoidable implementation friction.",
+      "evidence": "Mission AGENTS.md key pattern shows `setProperties({ ..., producer: '' ... })`. In this feature, the handoff records a type mismatch and src/core/redactor/repackager.ts omits `producer` to satisfy TypeScript."
+    },
+    {
+      "area": "knowledge",
+      "observation": "A pdfjs-dist typing quirk (convertToViewportPoint typed as any[] instead of tuple) is not captured in shared library docs, despite requiring a cast in implementation.",
+      "evidence": "src/core/pipeline/redact-document.ts casts `renderViewport as unknown as Viewport` before burnRedactions. The handoff documents this as a discovered issue, while .factory/library/environment.md does not mention it."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Fail: the redaction pipeline violates the feature's memory contract by retaining per-page 300 DPI canvases until the end instead of embedding and releasing each page as it is processed."
+}

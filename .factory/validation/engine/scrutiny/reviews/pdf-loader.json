@@ -1,0 +1,26 @@
+{
+  "featureId": "pdf-loader",
+  "reviewedAt": "2026-04-09T06:53:51Z",
+  "commitId": "9a093f3",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "Implementation matches the feature contract: loader configures pdfjs-dist v5 worker source, validates MIME type and 50MB limit before loading, wires optional password callback through loadingTask.onPassword, returns { pdf, numPages }, and provides destroyPDF cleanup helper. Tests cover required validation and loader API behavior.",
+    "issues": []
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The engine-worker skill does not mention that importing pdfjs-dist in Vitest/jsdom requires mocking due to missing DOMMatrix, which caused avoidable iteration during implementation.",
+      "evidence": "worker-transcripts.jsonl (session 79a2e798-1341-4fd0-a47d-6c145d603836) shows explicit failure analysis: \"pdfjs-dist 5.x needs DOMMatrix which isn't available in jsdom\" and subsequent test refactor to mock pdfjs-dist; handoff.skillFeedback.suggestedChanges repeats this gap."
+    },
+    {
+      "area": "knowledge",
+      "observation": "Shared library docs do not currently capture the jsdom/pdfjs-dist DOMMatrix limitation and recommended unit-test mocking pattern.",
+      "evidence": "No DOMMatrix/jsdom-pdfjs guidance found in .factory/library/* (architecture.md, environment.md) or .factory/skills/engine-worker/SKILL.md, while this issue was encountered and documented in the feature transcript/handoff."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Reviewed feature pdf-loader at commit 9a093f3. The feature satisfies its required behavior with no blocking code defects found; review status is pass. Noted a shared-state gap around documenting pdfjs-dist + jsdom mocking requirements."
+}
