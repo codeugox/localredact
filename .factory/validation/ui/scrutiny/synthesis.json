@@ -1,0 +1,121 @@
+{
+  "milestone": "ui",
+  "round": 1,
+  "status": "fail",
+  "validatorsRun": {
+    "test": {
+      "passed": true,
+      "command": "npx vitest run --reporter=verbose",
+      "exitCode": 0
+    },
+    "typecheck": {
+      "passed": true,
+      "command": "npx tsc --noEmit",
+      "exitCode": 0
+    },
+    "lint": {
+      "passed": true,
+      "command": "npx tsc --noEmit",
+      "exitCode": 0
+    }
+  },
+  "reviewsSummary": {
+    "total": 8,
+    "passed": 2,
+    "failed": 6,
+    "failedFeatures": [
+      "drop-screen",
+      "processing-and-password",
+      "preview-viewer-highlights",
+      "preview-sidebar-panel",
+      "preview-nav-tooltips-keyboard",
+      "download-done-flow"
+    ]
+  },
+  "blockingIssues": [
+    {
+      "featureId": "drop-screen",
+      "severity": "blocking",
+      "description": "Multi-file drop handling always processes files[0] and provides no explicit one-file-at-a-time feedback, so mixed multi-file drops can ignore a valid PDF and miss VAL-DROP-006 behavior."
+    },
+    {
+      "featureId": "processing-and-password",
+      "severity": "blocking",
+      "description": "Password modal is mounted in DropScreen, but encrypted-PDF detection transitions to LOADING where ProcessingScreen renders; modal becomes unreachable and password flow blocks."
+    },
+    {
+      "featureId": "preview-viewer-highlights",
+      "severity": "blocking",
+      "description": "DocumentViewer reloads PDFs without onPassword callback support, so encrypted PDFs fail to render in preview after password-gated detection."
+    },
+    {
+      "featureId": "preview-sidebar-panel",
+      "severity": "blocking",
+      "description": "Clicking sidebar entity rows does not scroll to first matching highlight, missing required panel-to-document linking behavior."
+    },
+    {
+      "featureId": "preview-sidebar-panel",
+      "severity": "blocking",
+      "description": "Group header count chips and required uncertain count behavior are missing/mismatched, violating expected sidebar count semantics."
+    },
+    {
+      "featureId": "preview-nav-tooltips-keyboard",
+      "severity": "blocking",
+      "description": "Page thumbnails are numeric placeholders instead of required 0.2x page previews."
+    },
+    {
+      "featureId": "preview-nav-tooltips-keyboard",
+      "severity": "blocking",
+      "description": "Tooltip unmounts on highlight mouseleave before cursor can reach tooltip, breaking tooltip action-button toggle behavior."
+    },
+    {
+      "featureId": "download-done-flow",
+      "severity": "blocking",
+      "description": "Footer download flow calls redactDocument without onPassword callback, so encrypted PDFs fail in redaction/download stage."
+    }
+  ],
+  "appliedUpdates": [],
+  "suggestedGuidanceUpdates": [
+    {
+      "target": "ui-worker skill",
+      "suggestion": "Clarify the agent-browser requirement to explicitly allow either Skill invocation or direct `agent-browser --session ...` CLI usage, and document canonical command patterns (`open`, `close`, inspect/session usage).",
+      "evidence": "Multiple reviews (app-state-and-styles, preview-viewer-highlights) flagged ambiguity between a 'MUST be invoked' wording and successful direct CLI usage patterns.",
+      "isSystemic": true
+    },
+    {
+      "target": "ui-worker skill",
+      "suggestion": "Strengthen completion criteria so workers must fail/partial when required interaction checks are not reproducible (timeouts or unmet expected behavior), and must report procedure deviations instead of marking fully followed.",
+      "evidence": "Reviews for drop-screen, preview-viewer-highlights, preview-sidebar-panel, and preview-nav-tooltips-keyboard show skipped/partial procedure steps or unmet interaction checks reported as successful runs.",
+      "isSystemic": true
+    },
+    {
+      "target": "ui-worker skill",
+      "suggestion": "Expand testing guidance from tests/unit-only phrasing to permit/encourage tests/integration for cross-screen and state-machine features.",
+      "evidence": "end-to-end-integration correctly implemented tests in tests/integration, which conflicts with narrow tests/unit wording in skill instructions.",
+      "isSystemic": true
+    },
+    {
+      "target": "AGENTS.md",
+      "suggestion": "Add an explicit convention that app-state signal transitions should go through `dispatch(event)` unless a justified exception is documented.",
+      "evidence": "drop-screen review identified direct signal mutation in component code while dispatch-only expectation currently appears only in state.ts comments.",
+      "isSystemic": false
+    },
+    {
+      "target": "ui-worker skill",
+      "suggestion": "Add mandatory encrypted-PDF regression checks for any feature that touches detection, preview loading, or download/redaction callbacks.",
+      "evidence": "processing-and-password, preview-viewer-highlights, and download-done-flow each introduced independent encrypted-PDF callback/routing regressions.",
+      "isSystemic": true
+    }
+  ],
+  "rejectedObservations": [
+    {
+      "observation": "Per-feature complaints about exact ordering of test-first implementation steps.",
+      "reason": "ambiguous"
+    },
+    {
+      "observation": "Repeated notes that architecture.md was not read in one worker run.",
+      "reason": "duplicate"
+    }
+  ],
+  "previousRound": null
+}

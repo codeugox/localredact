@@ -1,0 +1,34 @@
+{
+  "featureId": "preview-sidebar-panel",
+  "reviewedAt": "2026-04-09T08:48:13Z",
+  "commitId": "9615889f7fa2e00f79d1b2a84ba0cb124e950f29",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The feature is close, but it does not fully satisfy required sidebar-linking/count behaviors in the feature contract.",
+    "issues": [
+      {
+        "file": "src/components/SummaryPanel.tsx",
+        "line": 154,
+        "severity": "blocking",
+        "description": "Clicking an entity row only dispatches FOCUS_ENTITY; no scroll-to-first-matching-highlight behavior is implemented. This misses expected behavior requiring panel click to scroll the document to the first matching highlight."
+      },
+      {
+        "file": "src/components/SummaryPanel.tsx",
+        "line": 186,
+        "severity": "blocking",
+        "description": "Decision group headers (Removing/Keeping/Your decision) render without count chips, and uncertain rows render a 'Review' tag instead of a count (line 244). This does not meet the feature requirement that count chips reflect group/entity counts."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The worker marked the UI skill procedure as followed while deferring a listed expected behavior (scroll-to-highlight) to another feature.",
+      "evidence": "Handoff file /Users/macbookpro/.factory/missions/03700c5a-5a07-4ab7-b688-0280f2e4ac86/handoffs/2026-04-09T08-12-10-619Z__preview-sidebar-panel__c702c7e6-c47a-413a-92e5-4fc1aad3241d.json states in whatWasLeftUndone that scroll-to-first-matching-highlight is not wired, while features.json expectedBehavior for preview-sidebar-panel includes document scroll on row click."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Review failed: the implementation misses required panel-to-document scroll linking and required count-chip behavior for sidebar grouping."
+}

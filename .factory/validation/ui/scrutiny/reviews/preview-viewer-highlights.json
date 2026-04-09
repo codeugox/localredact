@@ -1,0 +1,33 @@
+{
+  "featureId": "preview-viewer-highlights",
+  "reviewedAt": "2026-04-09T08:49:17Z",
+  "commitId": "6f1e3769e302c8e4426ed0fe8464a474a2f05ef7",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The core preview/highlight rendering is implemented, but there is a blocking regression for password-protected PDFs: detection can succeed (with password prompt), then preview silently fails to render because DocumentViewer reloads the PDF without password handling.",
+    "issues": [
+      {
+        "file": "src/components/DocumentViewer.tsx",
+        "line": 58,
+        "severity": "blocking",
+        "description": "DocumentViewer calls loadPDF(file) without passing an onPassword callback, while encrypted PDFs require onPassword (see src/core/pdf/loader.ts lines 96-116 and detect-document usage at src/core/pipeline/detect-document.ts line 416). For password-protected files, this causes preview load failure; the catch block at line 68 suppresses the error, leaving a blank/failed viewer after successful detection."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The ui-worker skill requires test-first (RED), but this run implemented components before adding tests; handoff skillFeedback still marked procedure as followed.",
+      "evidence": "Transcript skeleton for workerSessionId 7832a466-d464-4fc5-96e2-51cea8cda848 shows 'Now let me create the HighlightGroup component' and file creation steps before the later 'Now let me write the tests' step."
+    },
+    {
+      "area": "skills",
+      "observation": "The ui-worker skill says to use agent-browser but does not provide actionable CLI usage patterns for this environment, which led to trial-and-error during verification.",
+      "evidence": "Transcript skeleton shows failed command 'agent-browser ... launch' (Unknown command), followed by 'agent-browser --help' and then switching to 'agent-browser ... open'."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Review failed: preview-viewer-highlights introduces a blocking encrypted-PDF preview regression by reloading PDFs in DocumentViewer without password callback support."
+}
