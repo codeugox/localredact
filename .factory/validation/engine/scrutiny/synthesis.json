@@ -1,7 +1,7 @@
 {
   "milestone": "engine",
-  "round": 1,
-  "status": "fail",
+  "round": 2,
+  "status": "pass",
   "validatorsRun": {
     "test": {
       "passed": true,
@@ -20,78 +20,21 @@
     }
   },
   "reviewsSummary": {
-    "total": 7,
-    "passed": 4,
-    "failed": 3,
-    "failedFeatures": [
-      "core-types-and-patterns",
-      "text-indexer-and-coords",
-      "redaction-pipeline"
-    ]
+    "total": 2,
+    "passed": 2,
+    "failed": 0,
+    "failedFeatures": []
   },
-  "blockingIssues": [
-    {
-      "featureId": "core-types-and-patterns",
-      "severity": "blocking",
-      "description": "ZIP context scoring is case-insensitive while matching two-letter state abbreviations, so ordinary words like \"in\" can falsely trigger labeled-context confidence boosts for standalone ZIP-like matches."
-    },
-    {
-      "featureId": "text-indexer-and-coords",
-      "severity": "blocking",
-      "description": "Text-item deduplication key includes item text instead of position-only criteria, so same-position overlapping items with different strings are not deduplicated as required."
-    },
-    {
-      "featureId": "redaction-pipeline",
-      "severity": "blocking",
-      "description": "redactDocument accumulates 300-DPI canvases across pages and repackages only after the loop, violating the required sequential render→burn→embed→release memory contract."
-    }
-  ],
+  "blockingIssues": [],
   "appliedUpdates": [],
   "suggestedGuidanceUpdates": [
     {
-      "target": ".factory/skills/engine-worker/SKILL.md",
-      "suggestion": "Add explicit testing guidance for pdfjs-dist under Vitest/jsdom: mock pdfjs-dist/DOMMatrix dependencies and mock HTMLCanvasElement 2D context APIs for redaction tests.",
-      "evidence": "Both pdf-loader and redaction-pipeline reviews reported avoidable friction from missing jsdom + pdfjs-dist + canvas mocking guidance.",
-      "isSystemic": true
-    },
-    {
-      "target": ".factory/skills/engine-worker/SKILL.md",
-      "suggestion": "Add detector-pipeline regression checklist items for (a) cross-line regex false positives and (b) same-position/different-string text-item dedup tests.",
-      "evidence": "detection-pipeline required newline-span filtering, and text-indexer-and-coords missed position-only dedup semantics due insufficient explicit regression guidance.",
-      "isSystemic": true
-    },
-    {
-      "target": "AGENTS.md",
-      "suggestion": "Align canonical EntityType examples with current source-of-truth naming to avoid stale aliases in implementation guidance.",
-      "evidence": "core-types-and-patterns and merger-and-modes reviews both flagged stale entity-name references causing worker ambiguity.",
-      "isSystemic": true
-    },
-    {
-      "target": "AGENTS.md",
-      "suggestion": "Clarify jsPDF setProperties example for TypeScript strict mode (e.g., avoid unsupported `producer` field or note typing-safe alternative).",
-      "evidence": "redaction-pipeline review observed TypeScript friction from AGENTS pattern using `producer` not present in strict jsPDF DocumentProperties typings.",
-      "isSystemic": false
-    },
-    {
-      "target": "AGENTS.md",
-      "suggestion": "Surface merger tie-break expectations for overlapping multi-layer detections (or explicitly reference authoritative _docs section) so future merger logic does not drift.",
-      "evidence": "merger-and-modes review flagged that tie-break conventions exist in _docs but are not surfaced in worker-facing guidance.",
+      "target": ".factory/library/architecture.md",
+      "suggestion": "Document text-index dedup key semantics explicitly as position-only (x, y, width, height) so implementation intent matches validation contract.",
+      "evidence": "fix-engine-blocking review noted architecture guidance was generic about duplicate handling and previously allowed a position+text dedup implementation to diverge from expected behavior.",
       "isSystemic": false
     }
   ],
-  "rejectedObservations": [
-    {
-      "observation": "Shared architecture docs contain stale entity-type examples that do not match current EntityType union.",
-      "reason": "duplicate"
-    },
-    {
-      "observation": "Shared library docs do not currently capture the jsdom/pdfjs-dist DOMMatrix limitation and recommended unit-test mocking pattern.",
-      "reason": "deferred-to-skill-guidance"
-    },
-    {
-      "observation": "A pdfjs-dist typing quirk (convertToViewportPoint typed as any[] instead of tuple) is not captured in shared library docs.",
-      "reason": "ambiguous"
-    }
-  ],
-  "previousRound": null
+  "rejectedObservations": [],
+  "previousRound": ".factory/validation/engine/scrutiny/synthesis.round1.json"
 }
