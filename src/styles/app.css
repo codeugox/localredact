@@ -1480,3 +1480,213 @@ body {
   background: rgba(168, 110, 0, 0.12);
   border-color: rgba(168, 110, 0, 0.4);
 }
+
+/* ─── Jump bar (above footer) ──────────────────────────────────── */
+
+.jump-bar {
+  display: flex;
+  justify-content: center;
+  padding: 6px 20px;
+  background: var(--surface);
+  border-top: 1px solid var(--150);
+  flex-shrink: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Footer Bar — start over, count chips, local badge, download
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ─── Ghost button (Start over) ────────────────────────────────── */
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 7px 14px;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--400);
+  background: none;
+  border: 1px solid var(--150);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+  letter-spacing: -0.015em;
+}
+
+.btn-ghost:hover {
+  background: var(--100);
+  border-color: var(--200);
+  color: var(--700);
+}
+
+/* ─── Count chips ──────────────────────────────────────────────── */
+
+.count-chips {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.count-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: 20px;
+  border: 1px solid var(--150);
+  background: var(--surface);
+  color: var(--500);
+  letter-spacing: 0.02em;
+  user-select: none;
+}
+
+.count-chip-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.count-chip-dot--redact {
+  background: var(--red);
+}
+
+.count-chip-dot--keep {
+  background: var(--green);
+}
+
+.count-chip-dot--uncertain {
+  background: var(--amber);
+}
+
+/* ─── Local only badge ─────────────────────────────────────────── */
+
+.badge-local {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--green);
+  background: var(--green-soft);
+  border: 1px solid var(--green-border);
+  border-radius: 20px;
+  letter-spacing: -0.01em;
+  user-select: none;
+}
+
+.badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  flex-shrink: 0;
+}
+
+/* ─── Download button ──────────────────────────────────────────── */
+
+.btn-download {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 700;
+  color: white;
+  background: var(--red);
+  border: 1.5px solid var(--red);
+  border-radius: var(--r-md);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+  letter-spacing: -0.02em;
+}
+
+.btn-download:hover:not(:disabled) {
+  background: var(--red-hover);
+  border-color: var(--red-hover);
+}
+
+.btn-download:disabled {
+  pointer-events: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Done Screen — success icon, filename, privacy message, start over
+   ═══════════════════════════════════════════════════════════════════ */
+
+.done-screen {
+  text-align: center;
+  padding: 40px 0;
+}
+
+.done-icon {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 24px;
+}
+
+.done-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.done-heading {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--950);
+  margin-bottom: 12px;
+}
+
+.done-filename {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--500);
+  background: var(--100);
+  border: 1px solid var(--150);
+  padding: 8px 16px;
+  border-radius: var(--r-md);
+  display: inline-block;
+  margin-bottom: 20px;
+  letter-spacing: 0.01em;
+}
+
+.done-privacy {
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--400);
+  line-height: 1.6;
+  letter-spacing: -0.01em;
+  max-width: 360px;
+  margin: 0 auto 28px;
+}
+
+.btn-start-over {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 22px;
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 700;
+  color: white;
+  background: var(--red);
+  border: 1.5px solid var(--red);
+  border-radius: var(--r-md);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+  letter-spacing: -0.02em;
+}
+
+.btn-start-over:hover {
+  background: var(--red-hover);
+  border-color: var(--red-hover);
+}
