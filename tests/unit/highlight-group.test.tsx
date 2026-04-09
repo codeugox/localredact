@@ -71,6 +71,7 @@ describe('HighlightGroup', () => {
 
       renderInSvg(container, {
         entityId: 'entity-1',
+        entityType: 'US_SSN',
         decision: 'REDACT',
         quads: [quad],
         viewport,
@@ -87,6 +88,7 @@ describe('HighlightGroup', () => {
 
       renderInSvg(container, {
         entityId: 'entity-2',
+        entityType: 'US_SSN',
         decision: 'REDACT',
         quads: [quad1, quad2],
         viewport,
@@ -109,6 +111,7 @@ describe('HighlightGroup', () => {
 
       renderInSvg(container, {
         entityId: 'entity-3',
+        entityType: 'US_SSN',
         decision: 'REDACT',
         quads: [quad],
         viewport,
@@ -139,6 +142,7 @@ describe('HighlightGroup', () => {
 
       renderInSvg(container, {
         entityId: 'entity-r',
+        entityType: 'US_SSN',
         decision: 'REDACT',
         quads: [quad],
         viewport,
@@ -154,6 +158,7 @@ describe('HighlightGroup', () => {
 
       renderInSvg(container, {
         entityId: 'entity-g',
+        entityType: 'MONEY',
         decision: 'KEEP',
         quads: [quad],
         viewport,
@@ -169,6 +174,7 @@ describe('HighlightGroup', () => {
 
       renderInSvg(container, {
         entityId: 'entity-a',
+        entityType: 'US_EIN',
         decision: 'UNCERTAIN',
         quads: [quad],
         viewport,
@@ -184,6 +190,7 @@ describe('HighlightGroup', () => {
 
       renderInSvg(container, {
         entityId: 'entity-d',
+        entityType: 'US_EIN',
         decision: 'UNCERTAIN',
         quads: [quad],
         viewport,
@@ -218,6 +225,7 @@ describe('HighlightGroup', () => {
 
       renderInSvg(container, {
         entityId: 'entity-click',
+        entityType: 'US_SSN',
         decision: 'REDACT',
         quads: [quad],
         viewport,
@@ -253,6 +261,7 @@ describe('HighlightGroup', () => {
 
       renderInSvg(container, {
         entityId: 'entity-uncertain',
+        entityType: 'US_EIN',
         decision: 'UNCERTAIN',
         quads: [quad],
         viewport,
@@ -285,6 +294,7 @@ describe('HighlightGroup', () => {
 
       renderInSvg(container, {
         entityId: 'entity-keep',
+        entityType: 'MONEY',
         decision: 'KEEP',
         quads: [quad],
         viewport,
@@ -309,6 +319,7 @@ describe('HighlightGroup', () => {
 
       renderInSvg(container, {
         entityId: 'entity-multi',
+        entityType: 'STREET_ADDRESS',
         decision: 'REDACT',
         quads: [quad1, quad2, quad3],
         viewport,
@@ -329,6 +340,7 @@ describe('HighlightGroup', () => {
 
       renderInSvg(container, {
         entityId: 'entity-multi-class',
+        entityType: 'MONEY',
         decision: 'KEEP',
         quads: [quad1, quad2],
         viewport,

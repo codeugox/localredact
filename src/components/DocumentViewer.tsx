@@ -155,6 +155,7 @@ export function DocumentViewer() {
               <HighlightGroup
                 key={entity.id}
                 entityId={entity.id}
+                entityType={entity.type}
                 decision={entity.decision}
                 quads={entity.quads}
                 viewport={vp}

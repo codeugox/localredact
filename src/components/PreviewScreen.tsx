@@ -1,22 +1,23 @@
 // src/components/PreviewScreen.tsx
 // Main preview/review screen layout: left sidebar (240px) + document area.
-// For now, the sidebar is a placeholder — sidebar content comes in next features.
-// The document area contains the DocumentViewer (canvas + SVG overlay).
+// Sidebar contains SummaryPanel (mode tabs, entity list, callout, legend).
+// Document area contains the DocumentViewer (canvas + SVG overlay).
 
 import { DocumentViewer } from './DocumentViewer'
+import { SummaryPanel } from './SummaryPanel'
 
 /**
  * Preview/review screen component.
  * Renders a two-column layout:
- * - Left sidebar (240px): placeholder for SummaryPanel (next feature)
+ * - Left sidebar (240px): SummaryPanel with mode tabs, entity list, callout, legend
  * - Document area: DocumentViewer with PDF canvas and highlight overlay
  */
 export function PreviewScreen() {
   return (
     <div class="preview-layout">
-      {/* Sidebar — placeholder for SummaryPanel, PageNav, etc. */}
+      {/* Sidebar with summary panel */}
       <aside class="preview-sidebar">
-        {/* Sidebar content will be added by preview-sidebar-panel feature */}
+        <SummaryPanel />
       </aside>
 
       {/* Document area */}
