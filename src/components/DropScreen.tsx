@@ -422,7 +422,17 @@ export function DropScreen() {
         <div class="drop-footer">
           <a class="drop-footer-link" href="/faq.html">FAQ</a>
           <span class="drop-footer-sep">·</span>
-          <a class="drop-footer-link" href="#">Source</a>
+          <a class="drop-footer-link" href="/privacy.html">Privacy</a>
+          <span class="drop-footer-sep">·</span>
+          <a
+            class="drop-footer-link"
+            href="https://github.com"
+            title="GitHub repository — coming soon"
+            target="_blank"
+            rel="noopener"
+          >Source</a>
+          <span class="drop-footer-sep">·</span>
+          <span class="drop-footer-link" style={{ cursor: 'default' }}>MIT License</span>
         </div>
       </div>
     </div>
