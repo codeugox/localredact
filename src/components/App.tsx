@@ -5,7 +5,10 @@
 // DONE → DoneScreen.
 // PasswordModal is mounted at root level so it remains visible
 // regardless of current screen state (e.g., during LOADING).
+// MobileBanner shows a dismissible notice on narrow viewports.
 
+import { signal } from '@preact/signals'
+import { useCallback, useEffect } from 'preact/hooks'
 import { appState } from '../app/state'
 import {
   showPasswordModal,
@@ -18,6 +21,55 @@ import { ProcessingScreen } from './ProcessingScreen'
 import { PreviewScreen } from './PreviewScreen'
 import { DoneScreen } from './DoneScreen'
 import { PasswordModal } from './PasswordModal'
+
+// ─── Mobile banner state ────────────────────────────────────────────
+
+/** Whether the mobile banner has been dismissed this session */
+const mobileBannerDismissed = signal(false)
+
+/** Whether the viewport is narrow (< 768px) */
+const isMobileViewport = signal(
+  typeof window !== 'undefined' ? window.innerWidth < 768 : false
+)
+
+/**
+ * Dismissible banner shown on mobile viewports.
+ */
+function MobileBanner() {
+  const dismissed = mobileBannerDismissed.value
+  const isMobile = isMobileViewport.value
+
+  useEffect(() => {
+    function handleResize() {
+      isMobileViewport.value = window.innerWidth < 768
+    }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
+  const handleDismiss = useCallback(() => {
+    mobileBannerDismissed.value = true
+  }, [])
+
+  if (dismissed || !isMobile) return null
+
+  return (
+    <div class="mobile-banner" role="status">
+      <span class="mobile-banner-text">
+        Local Redact works best on desktop. You can continue, but the interface
+        is optimized for larger screens.
+      </span>
+      <button
+        class="mobile-banner-close"
+        onClick={handleDismiss}
+        type="button"
+        aria-label="Dismiss"
+      >
+        ×
+      </button>
+    </div>
+  )
+}
 
 /**
  * Render the screen for the current app state.
@@ -58,6 +110,7 @@ export function App() {
 
   return (
     <>
+      <MobileBanner />
       <CurrentScreen />
       {isPasswordModalVisible && (
         <PasswordModal

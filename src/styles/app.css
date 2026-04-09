@@ -437,6 +437,49 @@ body {
   color: var(--500);
 }
 
+/* ─── Mobile banner ─────────────────────────────────────────────── */
+
+.mobile-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: var(--amber-soft);
+  border-bottom: 1px solid var(--amber-border);
+  font-size: 12px;
+  color: var(--amber);
+  flex-shrink: 0;
+}
+
+.mobile-banner-text {
+  flex: 1;
+  line-height: 1.45;
+  letter-spacing: -0.01em;
+}
+
+.mobile-banner-close {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: 1px solid var(--amber-border);
+  border-radius: 4px;
+  color: var(--amber);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  font-family: var(--font-ui);
+  transition: background 0.12s ease;
+}
+
+.mobile-banner-close:hover {
+  background: rgba(168, 110, 0, 0.1);
+}
+
 /* ═══════════════════════════════════════════════════════════════════
    Drop Screen — homepage drop zone, headline, mode selector, trust
    ═══════════════════════════════════════════════════════════════════ */
@@ -681,6 +724,32 @@ body {
   padding: 1px 5px;
   border-radius: 3px;
   color: var(--400);
+}
+
+/* ─── Drop screen footer links ─────────────────────────────────── */
+
+.drop-footer {
+  text-align: center;
+  margin-top: 18px;
+}
+
+.drop-footer-link {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--300);
+  text-decoration: none;
+  letter-spacing: -0.01em;
+  transition: color 0.15s;
+}
+
+.drop-footer-link:hover {
+  color: var(--500);
+}
+
+.drop-footer-sep {
+  font-size: 11px;
+  color: var(--200);
+  margin: 0 8px;
 }
 
 /* ─── Error message ────────────────────────────────────────────── */

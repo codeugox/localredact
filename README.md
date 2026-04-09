@@ -68,6 +68,20 @@ Opens at `http://localhost:5173`.
 | `npm run typecheck` | TypeScript type checking (no emit) |
 | `npm run build` | Type check + production build |
 
+## Browser Support
+
+| Browser | Version | Status |
+|---------|---------|--------|
+| Chrome | 118+ | Fully supported |
+| Firefox | 115+ | Fully supported |
+| Safari | 16.4+ | Fully supported |
+| Edge | 118+ | Fully supported |
+| Mobile Chrome | Latest | Works (desktop recommended) |
+| Mobile Safari | Latest | Works (desktop recommended) |
+| Internet Explorer | Any | Not supported |
+
+The app is optimized for desktop browsers. On mobile devices, a banner will suggest switching to desktop for the best experience. See the [FAQ](/faq.html) for more details.
+
 ## Roadmap
 
 | Version | Milestone | Status |
@@ -75,6 +89,10 @@ Opens at `http://localhost:5173`.
 | V1.0 | Regex + checksum detection, rasterized redaction, identity-only and full modes | Done |
 | V1.1 | NER model for names and contextual PII in narrative text | Planned |
 | V1.2 | Image and OCR support for scanned documents | Planned |
+
+## FAQ
+
+See the [Frequently Asked Questions](/faq.html) page for answers about browser support, privacy verification, PII types detected, and more.
 
 ## License
 
