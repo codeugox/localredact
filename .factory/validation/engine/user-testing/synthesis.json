@@ -1,0 +1,20 @@
+{
+  "milestone": "engine",
+  "round": 1,
+  "status": "pass",
+  "assertionsSummary": {
+    "total": 0,
+    "passed": 0,
+    "failed": 0,
+    "blocked": 0
+  },
+  "selectionDetails": {
+    "source": "features[].fulfills for completed implementation features in milestone=engine",
+    "selectedAssertions": []
+  },
+  "passedAssertions": [],
+  "failedAssertions": [],
+  "blockedAssertions": [],
+  "appliedUpdates": [],
+  "previousRound": null
+}
