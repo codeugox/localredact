@@ -1,0 +1,82 @@
+{
+  "groupId": "ui-detect-context-rerun",
+  "testedAt": "2026-04-09T11:12:45.783423Z",
+  "isolation": {
+    "surface": "agent-browser",
+    "appUrl": "http://localhost:5173",
+    "missionDir": "/Users/macbookpro/.factory/missions/03700c5a-5a07-4ab7-b688-0280f2e4ac86",
+    "browserSession": "ui-detect-context-rerun-03700c5a",
+    "evidenceDir": "/Users/macbookpro/.factory/missions/03700c5a-5a07-4ab7-b688-0280f2e4ac86/evidence/ui/ui-detect-context-rerun/"
+  },
+  "toolsUsed": [
+    "agent-browser",
+    "node"
+  ],
+  "assertions": [
+    {
+      "id": "VAL-DETECT-007",
+      "title": "Context-sensitive confidence — labeled EIN vs. unlabeled",
+      "status": "fail",
+      "steps": [
+        {
+          "action": "Upload rerun fixture with labeled 'EIN: 12-3456789' and standalone '98-7654321'",
+          "expected": "Labeled EIN is red REDACT and standalone EIN is amber UNCERTAIN",
+          "observed": "Two EIN highlights rendered, but both had REDACT decision and red styling; no amber UNCERTAIN EIN present"
+        }
+      ],
+      "evidence": {
+        "fixtures": [
+          "ui/ui-detect-context-rerun/VAL-DETECT-007-context-ein-rerun.pdf"
+        ],
+        "screenshots": [
+          "ui/ui-detect-context-rerun/VAL-DETECT-007-context-ein-rerun.png"
+        ],
+        "domChecks": [
+          "ui/ui-detect-context-rerun/VAL-DETECT-007-dom-check.json"
+        ],
+        "consoleErrors": "none (ui/ui-detect-context-rerun/VAL-DETECT-007-console-errors.txt)",
+        "network": "none observed"
+      },
+      "issues": "UNCERTAIN state was not applied to the standalone EIN; both matches were auto-redacted."
+    },
+    {
+      "id": "VAL-DETECT-011",
+      "title": "Bank account context-sensitive matching",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Upload rerun fixture with 'Account Number: 123456789012' and standalone '987654321012'",
+          "expected": "Only the labeled account value is highlighted; label and standalone number are not highlighted",
+          "observed": "Exactly one bank-account highlight rendered (sidebar Bank account ×1), aligned to the labeled value only; standalone number did not produce a second highlight"
+        }
+      ],
+      "evidence": {
+        "fixtures": [
+          "ui/ui-detect-context-rerun/VAL-DETECT-011-bank-context-rerun.pdf"
+        ],
+        "screenshots": [
+          "ui/ui-detect-context-rerun/VAL-DETECT-011-bank-context-rerun.png"
+        ],
+        "domChecks": [
+          "ui/ui-detect-context-rerun/VAL-DETECT-011-dom-check.json"
+        ],
+        "consoleErrors": "none (ui/ui-detect-context-rerun/VAL-DETECT-011-console-errors.txt)",
+        "network": "none observed"
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [
+    {
+      "description": "Hidden input[type=file] is not interactable from default interactive snapshot.",
+      "resolved": true,
+      "resolution": "Temporarily exposed the existing input element via in-session DOM style changes before each upload (no app source edits).",
+      "affectedAssertions": [
+        "VAL-DETECT-007",
+        "VAL-DETECT-011"
+      ]
+    }
+  ],
+  "blockers": [],
+  "summary": "Tested 2 assertions: 1 passed (VAL-DETECT-011), 1 failed (VAL-DETECT-007)."
+}
