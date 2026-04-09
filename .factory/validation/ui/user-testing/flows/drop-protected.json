@@ -1,0 +1,96 @@
+{
+  "groupId": "drop-protected",
+  "testedAt": "2026-04-09T09:29:33.753747+00:00",
+  "isolation": {
+    "surface": "agent-browser",
+    "session": "drop-protected-03700c5a",
+    "appUrl": "http://localhost:5173",
+    "missionDir": "/Users/macbookpro/.factory/missions/03700c5a-5a07-4ab7-b688-0280f2e4ac86",
+    "evidenceDir": "/Users/macbookpro/.factory/missions/03700c5a-5a07-4ab7-b688-0280f2e4ac86/evidence/ui/drop-protected"
+  },
+  "toolsUsed": [
+    "agent-browser"
+  ],
+  "assertions": [
+    {
+      "id": "VAL-DROP-007",
+      "title": "Corrupted or zero-byte PDF handled gracefully",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Upload zero-byte PDF (zero-byte.pdf) from drop screen",
+          "expected": "App shows clear error and stays/returns on drop screen",
+          "observed": "Alert shown: 'File is empty. Please select a valid PDF.' and drop screen remained visible"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "ui/drop-protected/VAL-DROP-007-error-state.png"
+        ],
+        "consoleErrors": "none",
+        "network": "no requests captured"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-DROP-008",
+      "title": "Default mode is Identity only and selection persists through file drop",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Load app on drop screen",
+          "expected": "Identity only is selected by default",
+          "observed": "Identity mode button had selected styling (non-white background) while Full redaction was unselected"
+        },
+        {
+          "action": "Switch to Full redaction and upload valid-mode-check.pdf",
+          "expected": "Selected mode persists after drop and detection uses full-redaction behavior",
+          "observed": "Preview opened with 'Full redact' active and sidebar showed 'Dollar amounts \u00d71' under Removing, confirming full-redaction behavior"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "ui/drop-protected/VAL-DROP-008-default-mode.png",
+          "ui/drop-protected/VAL-DROP-008-mode-after-drop.png"
+        ],
+        "consoleErrors": "none",
+        "network": "no requests captured"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-DROP-009",
+      "title": "Password-protected PDF shows password prompt",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Upload password-protected PDF (password-protected.pdf)",
+          "expected": "Password modal appears with clear prompt and input field",
+          "observed": "Modal appeared with prompt 'This PDF is password-protected', explanatory text, password textbox, and Cancel/Unlock actions"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "ui/drop-protected/VAL-DROP-009-password-modal.png"
+        ],
+        "consoleErrors": "none",
+        "network": "GET /node_modules/pdfjs-dist/build/pdf.worker.min.mjs; GET /@vite/client; GET /node_modules/vite/dist/client/env.mjs"
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [
+    {
+      "description": "File upload automation required targeting hidden input selector input[type='file'] (uploading to the visible 'browse your files' button fails because it is not an HTMLInputElement).",
+      "resolved": true,
+      "resolution": "Used agent-browser upload against input[type='file'] for all fixture uploads.",
+      "affectedAssertions": [
+        "VAL-DROP-007",
+        "VAL-DROP-008",
+        "VAL-DROP-009"
+      ]
+    }
+  ],
+  "blockers": [],
+  "summary": "Tested 3 assertions: 3 passed, 0 failed, 0 blocked."
+}

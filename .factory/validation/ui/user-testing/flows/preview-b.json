@@ -1,0 +1,165 @@
+{
+  "groupId": "preview-b",
+  "testedAt": "2026-04-09T09:56:39Z",
+  "isolation": {
+    "milestone": "ui",
+    "surface": "agent-browser",
+    "appUrl": "http://localhost:5173",
+    "missionDir": "/Users/macbookpro/.factory/missions/03700c5a-5a07-4ab7-b688-0280f2e4ac86",
+    "browserSession": "preview-b-03700c5a",
+    "evidenceDir": "/Users/macbookpro/.factory/missions/03700c5a-5a07-4ab7-b688-0280f2e4ac86/evidence/ui/preview-b"
+  },
+  "toolsUsed": [
+    "agent-browser",
+    "node"
+  ],
+  "assertions": [
+    {
+      "id": "VAL-PREV-007",
+      "title": "Tab key jumps to next uncertain entity",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Load preview with unresolved entities",
+          "expected": "Uncertain entities are present and jump/download controls reflect unresolved state",
+          "observed": "Count chips were Removing=1, Keeping=0, Uncertain=3 and jump button was visible"
+        },
+        {
+          "action": "Press Tab once",
+          "expected": "Focus moves to next UNCERTAIN entity; sidebar row becomes active",
+          "observed": "Focused highlight became entity-2 (UNCERTAIN) and active sidebar row was US_EIN"
+        },
+        {
+          "action": "Press Tab again",
+          "expected": "Focus advances to the following UNCERTAIN entity in document order",
+          "observed": "Focused highlight advanced to entity-3 (UNCERTAIN) and active sidebar row switched to ZIP_CODE"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "ui/preview-b/VAL-PREV-007-tab-focus.png"
+        ],
+        "consoleErrors": "none",
+        "network": "No API/network activity required for this keyboard navigation assertion"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-PREV-008",
+      "title": "R and K keyboard shortcuts set REDACT and KEEP",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "With focused entity-3 (UNCERTAIN), press R",
+          "expected": "Focused entity becomes REDACT and counts update",
+          "observed": "entity-3 changed to REDACT; chips changed from [1,0,3] to [2,0,2]"
+        },
+        {
+          "action": "Press K on the same focused entity",
+          "expected": "Focused entity becomes KEEP and counts update",
+          "observed": "entity-3 changed to KEEP; chips changed to [1,1,2]"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "ui/preview-b/VAL-PREV-008-r-k-shortcuts.png"
+        ],
+        "consoleErrors": "none",
+        "network": "No API/network activity required for this keyboard shortcut assertion"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-PREV-009",
+      "title": "Count chips update live on every toggle",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Set focused entity-3 to REDACT and capture baseline counts",
+          "expected": "Known baseline before REDACT→KEEP toggle",
+          "observed": "Baseline counts were [2,0,2] with sum 4"
+        },
+        {
+          "action": "Toggle focused REDACT entity to KEEP (press K)",
+          "expected": "Removing decrements by 1, Keeping increments by 1, total remains constant",
+          "observed": "Counts changed to [1,1,2] with unchanged sum 4"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "ui/preview-b/VAL-PREV-009-count-chip-update.png"
+        ],
+        "consoleErrors": "none",
+        "network": "No API/network activity required for this count-chip assertion"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-PREV-010",
+      "title": "Download button disabled while uncertain items remain",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Check download button while uncertain > 0",
+          "expected": "Button is disabled with reduced opacity and not-allowed cursor",
+          "observed": "With counts [1,1,2], button had disabled=true, opacity=0.28, cursor=not-allowed"
+        },
+        {
+          "action": "Resolve all uncertain entities via Tab + R until uncertain=0",
+          "expected": "Button becomes enabled and clickable exactly when unresolved count reaches zero",
+          "observed": "After resolving, counts were [3,1,0], button disabled=false, opacity=1, cursor=pointer, and jump button disappeared"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "ui/preview-b/VAL-PREV-009-count-chip-update.png",
+          "ui/preview-b/VAL-PREV-010-download-enabled-after-resolve.png"
+        ],
+        "consoleErrors": "none",
+        "network": "No API/network activity required for this button-state assertion"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-PREV-011",
+      "title": "Start over clears all state and returns to drop screen",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Click \"← Start over\" from preview action bar",
+          "expected": "App returns to drop screen and clears review state",
+          "observed": "Returned to drop screen with browse/mode controls visible"
+        },
+        {
+          "action": "Inspect DOM for preview remnants",
+          "expected": "No preview layout, highlights, action bar, or page indicator remain",
+          "observed": "dropScreenVisible=true, previewLayoutExists=false, highlightCount=0, actionBarExists=false, pageIndicatorExists=false"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "ui/preview-b/VAL-PREV-011-start-over-drop-screen.png"
+        ],
+        "consoleErrors": "none",
+        "network": "No API/network activity required for this reset assertion"
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [
+    {
+      "description": "The file input is visually hidden in the drop screen, and agent-browser cannot interact with native file pickers directly.",
+      "resolved": true,
+      "resolution": "Used browser-side DOM style override to expose input[type=file] and then uploaded fixture through agent-browser upload command.",
+      "affectedAssertions": [
+        "VAL-PREV-007",
+        "VAL-PREV-008",
+        "VAL-PREV-009",
+        "VAL-PREV-010",
+        "VAL-PREV-011"
+      ]
+    }
+  ],
+  "blockers": [],
+  "summary": "Tested 5 assertions (VAL-PREV-007..011): 5 passed, 0 failed, 0 blocked."
+}

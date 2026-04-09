@@ -1,0 +1,172 @@
+{
+  "groupId": "output-b",
+  "testedAt": "2026-04-09T10:26:36.124775Z",
+  "isolation": {
+    "surface": "agent-browser",
+    "session": "out-b-validate",
+    "appUrl": "http://localhost:5173",
+    "missionDir": "/Users/macbookpro/.factory/missions/03700c5a-5a07-4ab7-b688-0280f2e4ac86",
+    "evidenceDir": "/Users/macbookpro/.factory/missions/03700c5a-5a07-4ab7-b688-0280f2e4ac86/evidence/ui/output-b"
+  },
+  "toolsUsed": [
+    "agent-browser",
+    "node",
+    "python3",
+    "pypdf",
+    "sips"
+  ],
+  "assertions": [
+    {
+      "id": "VAL-OUT-005",
+      "title": "Redacted areas are solid black with no visible text",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Process output-b-input.pdf in Identity mode and inspect rendered output page content",
+          "expected": "REDACT entities are covered by solid black polygons with no text bleed-through",
+          "observed": "SSN and email regions were rendered as uniform black bars; no underlying characters were visible in the zoomed evidence"
+        }
+      ],
+      "evidence": {
+        "fixtures": [
+          "ui/output-b/output-b-input.pdf",
+          "ui/output-b/output-b-input-redacted.pdf"
+        ],
+        "screenshots": [
+          "ui/output-b/VAL-OUT-005-zoomed-redacted-areas.png"
+        ],
+        "consoleErrors": "none",
+        "network": "none"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-OUT-006",
+      "title": "PDF metadata stripped to minimal values",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Compare input/output PDF metadata fields",
+          "expected": "No original author/title/subject/keywords persist; only minimal non-identifying metadata remains",
+          "observed": "Input metadata (/Author, /Subject, /Keywords, /Creator) was absent in output; output metadata contained only /Producer jsPDF 2.5.2, /Title Redacted Document, and /CreationDate"
+        }
+      ],
+      "evidence": {
+        "fixtures": [
+          "ui/output-b/output-b-input.pdf",
+          "ui/output-b/output-b-input-redacted.pdf"
+        ],
+        "screenshots": [
+          "ui/output-b/VAL-OUT-006-metadata-inspection.png"
+        ],
+        "consoleErrors": "none",
+        "network": "none"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-OUT-007",
+      "title": "Multi-page document has all pages in output",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Download redacted output from a 3-page input and verify page count",
+          "expected": "Output page count matches input and retains first/middle/last pages",
+          "observed": "Input and output both had 3 pages (pypdf analysis); first, middle, and last page renders were present"
+        },
+        {
+          "action": "Inspect content/redaction placement on each output page",
+          "expected": "Redactions appear on correct corresponding pages",
+          "observed": "Page 1 redacted SSN/email, page 2 redacted phone/address, page 3 redacted EIN/routing/account; sensitive fields matched source page context"
+        }
+      ],
+      "evidence": {
+        "fixtures": [
+          "ui/output-b/output-b-input.pdf",
+          "ui/output-b/output-b-input-redacted.pdf"
+        ],
+        "screenshots": [
+          "ui/output-b/VAL-OUT-007-output-page-thumbnails.png",
+          "ui/output-b/VAL-OUT-007-output-page-1.png",
+          "ui/output-b/VAL-OUT-007-output-page-2.png",
+          "ui/output-b/VAL-OUT-007-output-page-3.png"
+        ],
+        "consoleErrors": "none",
+        "network": "none"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-OUT-008",
+      "title": "KEEP entities remain visible and legible in output",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run flow in default Identity mode and inspect output content",
+          "expected": "Dollar amounts (KEEP) remain legible while identity PII is blacked out in same output",
+          "observed": "On output page 1, Salary $5,432.10 remained legible while SSN and email were blacked out; same mixed-state behavior also visible on pages 2-3 (Bonus/Net Pay visible with PII redacted)"
+        }
+      ],
+      "evidence": {
+        "fixtures": [
+          "ui/output-b/output-b-input.pdf",
+          "ui/output-b/output-b-input-redacted.pdf"
+        ],
+        "screenshots": [
+          "ui/output-b/VAL-OUT-008-output-pdf-page.png",
+          "ui/output-b/VAL-OUT-007-output-page-2.png",
+          "ui/output-b/VAL-OUT-007-output-page-3.png"
+        ],
+        "consoleErrors": "none",
+        "network": "none"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-OUT-009",
+      "title": "Output page dimensions match input",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Compare input and output page dimensions using PDF media boxes",
+          "expected": "Output dimensions match input exactly with no crop/stretch/resize",
+          "observed": "All input pages were 612x792 pt (letter) and all output pages were 612x792 pt; dimensions matched exactly"
+        }
+      ],
+      "evidence": {
+        "fixtures": [
+          "ui/output-b/output-b-input.pdf",
+          "ui/output-b/output-b-input-redacted.pdf"
+        ],
+        "screenshots": [],
+        "consoleErrors": "none",
+        "network": "none"
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [
+    {
+      "description": "Headless browser downloads were saved under UUID filenames without extension instead of preserving the target filename directly in the filesystem.",
+      "resolved": true,
+      "resolution": "Copied the latest downloaded artifact to ui/output-b/output-b-input-redacted.pdf for deterministic evidence analysis.",
+      "affectedAssertions": [
+        "VAL-OUT-005",
+        "VAL-OUT-006",
+        "VAL-OUT-007",
+        "VAL-OUT-008",
+        "VAL-OUT-009"
+      ]
+    },
+    {
+      "description": "Native PDF properties panel is not available in headless automation for metadata inspection screenshots.",
+      "resolved": true,
+      "resolution": "Used pypdf metadata extraction and captured a rendered comparison report screenshot as evidence.",
+      "affectedAssertions": [
+        "VAL-OUT-006"
+      ]
+    }
+  ],
+  "blockers": [],
+  "summary": "Tested 5 assertions (VAL-OUT-005..009): all 5 passed. Output redactions were opaque black, metadata was reduced, multi-page output matched input page count/content, KEEP money values remained legible in Identity mode, and output dimensions matched input exactly."
+}

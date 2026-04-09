@@ -48,3 +48,16 @@ Workers should create test fixture PDFs programmatically or include minimal test
 - No auth barriers — validators can navigate directly to the app
 - File interactions require drag-and-drop or file picker automation via agent-browser
 - Output PDF verification requires downloading and inspecting the file
+- Automation note: the upload control is a hidden `input[type=file]`; validators should target that element directly instead of the visible browse button.
+- Automation note: set `--download-path` when opening the browser session. In headless runs, downloaded files may appear with UUID filenames; use the app's download filename attribute plus latest downloaded artifact for verification.
+- Automation note: if headless PDF viewer rendering is limited, verify rasterization/text absence and metadata via artifact-side inspection (e.g., pdfjs/pypdf) and capture evidence output.
+
+## Flow Validator Guidance: agent-browser
+
+- Stay on the assigned assertion list only; do not test unrelated contract IDs.
+- Use a unique non-default browser session per validator to keep state isolated.
+- Use the shared app URL: `http://localhost:5173`.
+- Do not start/stop the shared Vite service from flow validators.
+- Keep any generated fixtures and downloaded outputs inside your assigned evidence directory only.
+- If a flow requires multiple attempts (e.g., wrong password then correct), keep them within the same session and capture both results.
+- Capture required evidence for each assertion (screenshots, DOM checks, console/network observations) in the flow report.

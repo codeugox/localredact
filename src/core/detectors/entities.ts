@@ -14,6 +14,7 @@ export type EntityType =
   | 'EMAIL_ADDRESS'
   | 'STREET_ADDRESS'
   | 'CITY_STATE_ZIP'
+  | 'ADDRESS'
   | 'ZIP_CODE'
   | 'DATE_OF_BIRTH'
   | 'BANK_ACCOUNT'

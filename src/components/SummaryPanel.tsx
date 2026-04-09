@@ -27,6 +27,7 @@ const ENTITY_TYPE_LABELS: Record<EntityType, string> = {
   EMAIL_ADDRESS: 'Email address',
   STREET_ADDRESS: 'Street address',
   CITY_STATE_ZIP: 'City, state & ZIP',
+  ADDRESS: 'Address',
   ZIP_CODE: 'ZIP code',
   DATE_OF_BIRTH: 'Date of birth',
   BANK_ACCOUNT: 'Bank account',

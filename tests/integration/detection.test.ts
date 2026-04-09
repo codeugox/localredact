@@ -217,8 +217,8 @@ describe('detectPipeline', () => {
         .filter((e) => e.page === 2)
         .map((e) => e.type)
 
-      expect(page2Types).toContain('STREET_ADDRESS')
-      expect(page2Types).toContain('CITY_STATE_ZIP')
+      // STREET_ADDRESS + CITY_STATE_ZIP are merged into ADDRESS
+      expect(page2Types).toContain('ADDRESS')
     })
 
     it('should detect EIN with context label on page 2', () => {
