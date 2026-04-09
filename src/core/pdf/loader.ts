@@ -4,10 +4,13 @@
 import * as pdfjsLib from 'pdfjs-dist'
 import type { PDFDocumentProxy } from 'pdfjs-dist'
 
-// Configure PDF.js web worker for pdfjs-dist 5.x (ESM .mjs only)
+// Configure PDF.js web worker for pdfjs-dist 5.x.
+// The worker file is copied to public/ by a Vite plugin (see vite.config.ts)
+// so it is served as a raw static file without Vite transforms. This avoids
+// Safari failures with `new Worker(url, { type: "module" })` and HMR injection.
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.min.mjs',
-  import.meta.url
+  './pdf.worker.min.mjs',
+  window.location.href
 ).toString()
 
 /** Maximum allowed file size: 50 MB */
