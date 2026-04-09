@@ -7,6 +7,7 @@
 import { appState } from '../app/state'
 import { DropScreen } from './DropScreen'
 import { ProcessingScreen } from './ProcessingScreen'
+import { PreviewScreen } from './PreviewScreen'
 
 /**
  * Root application component.
@@ -24,14 +25,7 @@ export function App() {
       return <ProcessingScreen />
 
     case 'NEEDS_REVIEW':
-      // PreviewScreen will be built in a future feature
-      return (
-        <div class="app-main">
-          <div class="container-sm text-center">
-            <p>Preview</p>
-          </div>
-        </div>
-      )
+      return <PreviewScreen />
 
     case 'PROCESSING':
       return <ProcessingScreen />
