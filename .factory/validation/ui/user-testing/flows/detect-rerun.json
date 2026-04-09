@@ -1,0 +1,153 @@
+{
+  "groupId": "detect-rerun",
+  "testedAt": "2026-04-09T10:52:10.985133Z",
+  "isolation": {
+    "surface": "agent-browser",
+    "appUrl": "http://localhost:5173",
+    "missionDir": "/Users/macbookpro/.factory/missions/03700c5a-5a07-4ab7-b688-0280f2e4ac86",
+    "browserSession": "detect-rerun-03700c5a",
+    "evidenceDir": "/Users/macbookpro/.factory/missions/03700c5a-5a07-4ab7-b688-0280f2e4ac86/evidence/ui/detect-rerun/"
+  },
+  "toolsUsed": [
+    "agent-browser",
+    "node"
+  ],
+  "assertions": [
+    {
+      "id": "VAL-DETECT-005",
+      "title": "Credit card with valid Luhn detected; invalid Luhn ignored",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Upload fixture with valid 4532015112830366 and invalid 4532015112830367 card numbers",
+          "expected": "Only valid number is highlighted; invalid number has no highlight",
+          "observed": "Exactly one CREDIT_CARD highlight rendered and sidebar showed Credit card ×1; invalid number line remained unhighlighted"
+        }
+      ],
+      "evidence": {
+        "fixtures": [
+          "ui/detect-rerun/VAL-DETECT-005-luhn.pdf"
+        ],
+        "screenshots": [
+          "ui/detect-rerun/VAL-DETECT-005-luhn.png"
+        ],
+        "domChecks": "groupCount=1, sidebar='Credit card×1'",
+        "consoleErrors": "none",
+        "network": "none captured"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-DETECT-007",
+      "title": "Context-sensitive confidence — labeled EIN vs. unlabeled",
+      "status": "fail",
+      "steps": [
+        {
+          "action": "Upload fixture containing labeled EIN and standalone unlabeled EIN",
+          "expected": "Labeled EIN is red REDACT and unlabeled EIN is amber UNCERTAIN",
+          "observed": "Two EIN highlights were rendered but both were REDACT; sidebar showed Employer EIN ×2 with no UNCERTAIN state"
+        }
+      ],
+      "evidence": {
+        "fixtures": [
+          "ui/detect-rerun/VAL-DETECT-007-context-ein.pdf"
+        ],
+        "screenshots": [
+          "ui/detect-rerun/VAL-DETECT-007-context-ein.png"
+        ],
+        "domChecks": "groupCount=2, decisionCounts={REDACT:2}",
+        "consoleErrors": "none",
+        "network": "none captured"
+      },
+      "issues": "Unlabeled EIN did not remain UNCERTAIN; it was auto-redacted."
+    },
+    {
+      "id": "VAL-DETECT-009",
+      "title": "Duplicate entities are not double-highlighted",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Upload fixture where same SSN appears twice on one line",
+          "expected": "Each occurrence has one highlight and sidebar count equals 2",
+          "observed": "Two separate highlight groups were rendered (one per occurrence) and sidebar showed Social security no. ×2"
+        }
+      ],
+      "evidence": {
+        "fixtures": [
+          "ui/detect-rerun/VAL-DETECT-009-duplicate-ssn.pdf"
+        ],
+        "screenshots": [
+          "ui/detect-rerun/VAL-DETECT-009-duplicate-ssn.png"
+        ],
+        "domChecks": "groupCount=2, each group rectCount=1, sidebar='Social security no.×2'",
+        "consoleErrors": "none",
+        "network": "none captured"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-DETECT-011",
+      "title": "Bank account context-sensitive matching",
+      "status": "fail",
+      "steps": [
+        {
+          "action": "Upload fixture with labeled Account Number and standalone unlabeled 12-digit number",
+          "expected": "Only labeled value highlighted; label and standalone number not highlighted",
+          "observed": "Two BANK_ACCOUNT highlights were rendered and sidebar showed Bank account ×2, indicating standalone unlabeled number was also highlighted"
+        }
+      ],
+      "evidence": {
+        "fixtures": [
+          "ui/detect-rerun/VAL-DETECT-011-bank-context.pdf"
+        ],
+        "screenshots": [
+          "ui/detect-rerun/VAL-DETECT-011-bank-context.png"
+        ],
+        "domChecks": "groupCount=2, sidebar='Bank account×2'",
+        "consoleErrors": "none",
+        "network": "none captured"
+      },
+      "issues": "Standalone unlabeled number is still being detected as BANK_ACCOUNT."
+    },
+    {
+      "id": "VAL-DETECT-012",
+      "title": "Multi-line address produces quads on separate lines",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Upload fixture with two-line address",
+          "expected": "Single ADDRESS entity spans both lines with quads on each line",
+          "observed": "Sidebar showed Address ×1 and one highlight group contained two rects covering line 1 and line 2"
+        }
+      ],
+      "evidence": {
+        "fixtures": [
+          "ui/detect-rerun/VAL-DETECT-012-multiline-address.pdf"
+        ],
+        "screenshots": [
+          "ui/detect-rerun/VAL-DETECT-012-multiline-address.png"
+        ],
+        "domChecks": "groupCount=1, rectCount=2, sidebar='Address×1'",
+        "consoleErrors": "none",
+        "network": "none captured"
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [
+    {
+      "description": "Hidden file input was not interactable from interactive snapshot by default.",
+      "resolved": true,
+      "resolution": "Used in-session DOM style adjustment to expose existing input[type=file] before each upload (no source file edits).",
+      "affectedAssertions": [
+        "VAL-DETECT-005",
+        "VAL-DETECT-007",
+        "VAL-DETECT-009",
+        "VAL-DETECT-011",
+        "VAL-DETECT-012"
+      ]
+    }
+  ],
+  "blockers": [],
+  "summary": "Retested 5 assertions: 3 passed (VAL-DETECT-005, VAL-DETECT-009, VAL-DETECT-012) and 2 failed (VAL-DETECT-007, VAL-DETECT-011)."
+}
