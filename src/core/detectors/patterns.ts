@@ -164,9 +164,9 @@ export const DOB_CONTEXT =
 export const BANK_ACCOUNT_VALUE =
   /\b\d{8,17}\b/g
 
-/** Bank account context labels */
+/** Bank account context labels — requires qualifier after 'account' (number/#/no.) */
 export const BANK_ACCOUNT_CONTEXT =
-  /(?:account\s*(?:number|#|no\.?)?:?\s*|acct\s*(?:#|no\.?)?:?\s*)/gi
+  /(?:account\s*(?:number|#|no\.?)\s*:?\s*|acct\s*(?:#|no\.?)?:?\s*)/gi
 
 // ──────────────────────────────────────────────────
 // ROUTING_NUMBER (context-sensitive)
