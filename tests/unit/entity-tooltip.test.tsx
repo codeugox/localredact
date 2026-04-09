@@ -120,7 +120,7 @@ describe('EntityTooltip', () => {
       expect(btn!.textContent).toContain('Keep instead')
     })
 
-    it('should show "Remove instead" for KEEP entities', () => {
+    it('should show "Redact" for KEEP entities', () => {
       const entity = makeEntity({ decision: 'KEEP' })
       render(
         <EntityTooltip
@@ -133,7 +133,7 @@ describe('EntityTooltip', () => {
       )
 
       const btn = container.querySelector('.tooltip-action')
-      expect(btn!.textContent).toContain('Remove instead')
+      expect(btn!.textContent).toContain('Redact')
     })
 
     it('should show "Redact" for UNCERTAIN entities', () => {

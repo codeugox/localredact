@@ -136,18 +136,19 @@ export function FooterBar() {
         </span>
 
         {/* Download button */}
-        <button
-          class="btn-download"
-          disabled={isDisabled}
-          onClick={handleDownloadClick}
-          type="button"
-          style={{
-            opacity: isDisabled ? '0.28' : '1',
-            cursor: isDisabled ? 'not-allowed' : 'pointer',
-          }}
-        >
-          Download redacted PDF
-        </button>
+        <div class="download-wrapper">
+          <button
+            class={`btn-download${!isDisabled ? ' btn-download--ready' : ''}`}
+            disabled={isDisabled}
+            onClick={handleDownloadClick}
+            type="button"
+          >
+            {isDisabled ? 'Download redacted PDF' : 'Download redacted PDF ↓'}
+          </button>
+          {isDisabled && (
+            <span class="download-helper">Resolve all items to download</span>
+          )}
+        </div>
       </div>
     </div>
   )

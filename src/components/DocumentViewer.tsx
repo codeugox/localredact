@@ -24,8 +24,8 @@ const canvasHeight = signal<number>(0)
 /** PDF.js viewport for coordinate transforms (updated after page render) */
 const pageViewport = signal<Viewport | null>(null)
 
-/** Tooltip state: entity being hovered, position, flip */
-const tooltipEntity = signal<DetectedEntity | null>(null)
+/** Tooltip state: entity ID being hovered, position, flip */
+const tooltipEntityId = signal<string | null>(null)
 const tooltipX = signal<number>(0)
 const tooltipY = signal<number>(0)
 const tooltipFlipped = signal<boolean>(false)
@@ -58,7 +58,9 @@ export function DocumentViewer() {
   const vp = pageViewport.value
   const cw = canvasWidth.value
   const ch = canvasHeight.value
-  const hoveredEntity = tooltipEntity.value
+  // Look up the fresh entity from signals each render so tooltip updates after toggle
+  const tooltipId = tooltipEntityId.value
+  const hoveredEntity = tooltipId ? entities.value.find((e) => e.id === tooltipId) ?? null : null
   const ttX = tooltipX.value
   const ttY = tooltipY.value
   const ttFlipped = tooltipFlipped.value
@@ -83,7 +85,7 @@ export function DocumentViewer() {
     const y = rect.top - viewportRect.top + viewportEl.scrollTop
     const flipped = rect.top - viewportRect.top < 80
 
-    tooltipEntity.value = entity
+    tooltipEntityId.value = entityId
     tooltipX.value = x
     tooltipY.value = flipped ? y + rect.height : y
     tooltipFlipped.value = flipped
@@ -95,7 +97,7 @@ export function DocumentViewer() {
       clearTimeout(tooltipHideTimer)
     }
     tooltipHideTimer = setTimeout(() => {
-      tooltipEntity.value = null
+      tooltipEntityId.value = null
       tooltipHideTimer = null
     }, TOOLTIP_HIDE_DELAY)
   }, [])
@@ -114,7 +116,7 @@ export function DocumentViewer() {
       clearTimeout(tooltipHideTimer)
     }
     tooltipHideTimer = setTimeout(() => {
-      tooltipEntity.value = null
+      tooltipEntityId.value = null
       tooltipHideTimer = null
     }, TOOLTIP_HIDE_DELAY)
   }, [])

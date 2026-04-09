@@ -24,11 +24,13 @@ const AMBIGUOUS_TYPES: ReadonlySet<EntityType> = new Set(['ORG', 'ZIP_CODE'])
  *
  * Decision logic:
  * 1. If confidence is below DISCARD threshold → null (entity should be dropped)
- * 2. If entity type is ambiguous (ORG, ZIP_CODE) → UNCERTAIN
- * 3. If mode defaults the type to KEEP (e.g., MONEY in identity mode) → KEEP
- *    (but still null if below discard threshold)
- * 4. If confidence >= AUTO_REDACT threshold → use mode's default decision for this type
- * 5. If confidence >= UNCERTAIN threshold → UNCERTAIN
+ * 2. FULL_REDACTION mode: everything above discard threshold → REDACT
+ *    (no UNCERTAIN items — the whole point of full mode is zero user review)
+ * 3. IDENTITY_ONLY mode:
+ *    a. If entity type is ambiguous (ORG, ZIP_CODE) → UNCERTAIN
+ *    b. If mode defaults the type to KEEP (e.g., MONEY) → KEEP
+ *    c. If confidence >= AUTO_REDACT threshold → use mode's default
+ *    d. Otherwise → UNCERTAIN
  *
  * @param type - The entity's PII type
  * @param mode - The active redaction mode
@@ -44,6 +46,13 @@ export function getDefaultDecision(
   if (confidence < CONFIDENCE_THRESHOLDS.DISCARD) {
     return null
   }
+
+  // FULL_REDACTION mode: everything above discard → REDACT (zero amber items)
+  if (mode === 'FULL_REDACTION') {
+    return 'REDACT'
+  }
+
+  // ── IDENTITY_ONLY mode logic ──────────────────────────────────
 
   // Ambiguous types are always UNCERTAIN (above discard threshold)
   if (AMBIGUOUS_TYPES.has(type)) {

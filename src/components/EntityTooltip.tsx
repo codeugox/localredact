@@ -47,16 +47,27 @@ export interface EntityTooltipProps {
   onMouseLeave?: () => void
 }
 
-// ─── Action text helper ─────────────────────────────────────────────
+// ─── Action text and style helpers ──────────────────────────────────
 
 function getActionText(decision: DetectedEntity['decision']): string {
   switch (decision) {
     case 'REDACT':
       return 'Keep instead'
     case 'KEEP':
-      return 'Remove instead'
+      return 'Redact'
     case 'UNCERTAIN':
       return 'Redact'
+  }
+}
+
+function getActionClass(decision: DetectedEntity['decision']): string {
+  switch (decision) {
+    case 'REDACT':
+      return 'tooltip-action tooltip-action--green'
+    case 'KEEP':
+      return 'tooltip-action tooltip-action--red'
+    case 'UNCERTAIN':
+      return 'tooltip-action tooltip-action--red'
   }
 }
 
@@ -84,7 +95,7 @@ export function EntityTooltip({ entity, x, y, flipped, onMouseEnter, onMouseLeav
     >
       <div class="tooltip-type">{ENTITY_TYPE_LABELS[entity.type]}</div>
       <div class="tooltip-text">{entity.text}</div>
-      <button class="tooltip-action" onClick={handleAction} type="button">
+      <button class={getActionClass(entity.decision)} onClick={handleAction} type="button">
         {getActionText(entity.decision)}
       </button>
       <div class="tooltip-arrow" />
