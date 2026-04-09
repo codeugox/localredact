@@ -135,9 +135,11 @@ describe('indexPage', () => {
   })
 
   it('should handle hasEOL flag — insert newline when set', () => {
+    // Both items share the same y but different widths (realistic — different text lengths).
+    // hasEOL on the first item forces a newline between them.
     const items = [
       makeItem('Line one', 50, 700, 60, 12, true),
-      makeItem('Line two', 50, 700, 60, 12, false),
+      makeItem('Line two', 120, 700, 55, 12, false),
     ]
     const page = indexPage(items, defaultViewport)
 
@@ -147,7 +149,7 @@ describe('indexPage', () => {
     expect(page.text).toContain('\n')
   })
 
-  it('should deduplicate items at same position', () => {
+  it('should deduplicate items at same position with same text', () => {
     const items = [
       makeItem('Duplicate', 50, 700, 60),
       makeItem('Duplicate', 50, 700, 60),
@@ -156,6 +158,35 @@ describe('indexPage', () => {
 
     // Should appear only once
     expect(page.text).toBe('Duplicate')
+  })
+
+  it('should deduplicate items at same position with different text (position-only dedup)', () => {
+    // Some PDFs overlay bold/italic text at the same coordinates with slightly
+    // different string content. Position-only dedup keeps only the first item.
+    const items = [
+      makeItem('Bold Text', 50, 700, 60, 12),
+      makeItem('Bold Text!', 50, 700, 60, 12), // same position, different string
+    ]
+    const page = indexPage(items, defaultViewport)
+
+    // Should appear only once — the first item wins
+    expect(page.text).toBe('Bold Text')
+    expect(page.items.length).toBe(1)
+  })
+
+  it('should NOT deduplicate items at different positions even with same text', () => {
+    // Items with same text but different positions should both be kept
+    const items = [
+      makeItem('Repeated', 50, 700, 60, 12),
+      makeItem('Repeated', 200, 700, 60, 12), // different x position
+    ]
+    const page = indexPage(items, defaultViewport)
+
+    // Both should be present
+    expect(page.items.length).toBe(2)
+    // Text should contain both occurrences
+    const count = (page.text.match(/Repeated/g) ?? []).length
+    expect(count).toBe(2)
   })
 
   it('should handle empty items array', () => {

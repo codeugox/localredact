@@ -64,15 +64,17 @@ function getY(item: TextItem): number {
 }
 
 /**
- * Deduplicate items that share the same position and string.
- * Some PDFs emit duplicate text items at the same coordinates.
+ * Deduplicate items that share the same position regardless of text content.
+ * Some PDFs emit duplicate text items at the same coordinates (sometimes with
+ * slightly different strings, e.g., bolded overlays). Using position-only
+ * dedup keys ensures we keep only one item per position.
  */
 function deduplicateItems(items: TextItem[]): TextItem[] {
   const seen = new Set<string>()
   const result: TextItem[] = []
 
   for (const item of items) {
-    const key = `${item.str}|${getX(item).toFixed(2)}|${getY(item).toFixed(2)}`
+    const key = `${getX(item).toFixed(2)}|${getY(item).toFixed(2)}|${item.width.toFixed(2)}|${item.height.toFixed(2)}`
     if (!seen.has(key)) {
       seen.add(key)
       result.push(item)

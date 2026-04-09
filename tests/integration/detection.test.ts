@@ -478,6 +478,84 @@ describe('detectPipeline', () => {
     })
   })
 
+  describe('ZIP context case sensitivity', () => {
+    it('should NOT boost confidence for common lowercase word "in" before ZIP code', () => {
+      const items: TextItem[] = [
+        makeTextItem('lives in 43201 area', 72, 720, 140),
+      ]
+      const pages = [{ items, viewport: LETTER_VIEWPORT }]
+      const result = detectPipeline(pages, 'IDENTITY_ONLY')
+
+      // ZIP_CODE is in AMBIGUOUS_TYPES so it should be UNCERTAIN,
+      // but the key thing is that "in" (lowercase) does NOT boost confidence
+      const zip = result.entities.find(
+        (e) => e.type === 'ZIP_CODE' && e.text === '43201'
+      )
+      // If found, confidence should be NO_CONTEXT (0.65), not boosted
+      if (zip) {
+        expect(zip.confidence).toBeLessThanOrEqual(0.65)
+      }
+    })
+
+    it('should NOT boost confidence for common lowercase word "or" before ZIP code', () => {
+      const items: TextItem[] = [
+        makeTextItem('this or 97201', 72, 720, 100),
+      ]
+      const pages = [{ items, viewport: LETTER_VIEWPORT }]
+      const result = detectPipeline(pages, 'IDENTITY_ONLY')
+
+      const zip = result.entities.find(
+        (e) => e.type === 'ZIP_CODE' && e.text === '97201'
+      )
+      if (zip) {
+        expect(zip.confidence).toBeLessThanOrEqual(0.65)
+      }
+    })
+
+    it('should boost confidence for uppercase state code "OH" before ZIP code', () => {
+      const items: TextItem[] = [
+        makeTextItem('OH 43201', 72, 720, 60),
+      ]
+      const pages = [{ items, viewport: LETTER_VIEWPORT }]
+      const result = detectPipeline(pages, 'IDENTITY_ONLY')
+
+      const zip = result.entities.find(
+        (e) => e.type === 'ZIP_CODE' && e.text === '43201'
+      )
+      expect(zip).toBeDefined()
+      // Should be boosted to MODERATE_CONTEXT (0.90) by uppercase state code
+      expect(zip!.confidence).toBeGreaterThanOrEqual(0.90)
+    })
+
+    it('should boost confidence for explicit ZIP label', () => {
+      const items: TextItem[] = [
+        makeTextItem('ZIP: 43201', 72, 720, 60),
+      ]
+      const pages = [{ items, viewport: LETTER_VIEWPORT }]
+      const result = detectPipeline(pages, 'IDENTITY_ONLY')
+
+      const zip = result.entities.find(
+        (e) => e.type === 'ZIP_CODE' && e.text === '43201'
+      )
+      expect(zip).toBeDefined()
+      expect(zip!.confidence).toBeGreaterThanOrEqual(0.90)
+    })
+
+    it('should boost confidence for case-insensitive "zip code" label', () => {
+      const items: TextItem[] = [
+        makeTextItem('zip code: 43201', 72, 720, 80),
+      ]
+      const pages = [{ items, viewport: LETTER_VIEWPORT }]
+      const result = detectPipeline(pages, 'IDENTITY_ONLY')
+
+      const zip = result.entities.find(
+        (e) => e.type === 'ZIP_CODE' && e.text === '43201'
+      )
+      expect(zip).toBeDefined()
+      expect(zip!.confidence).toBeGreaterThanOrEqual(0.90)
+    })
+  })
+
   describe('credit card Luhn filtering', () => {
     it('should reject credit card numbers that fail Luhn', () => {
       const items: TextItem[] = [

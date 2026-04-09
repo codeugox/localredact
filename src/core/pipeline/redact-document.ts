@@ -9,7 +9,7 @@ import type { OnPasswordCallback } from '../pdf/loader'
 import type { Viewport } from '../../utils/coords'
 import { renderPage, FINAL_SCALE, FALLBACK_SCALE } from '../redactor/rasterizer'
 import { burnRedactions } from '../redactor/burner'
-import { repackage } from '../redactor/repackager'
+import { createDoc, addPageToDoc, finalizeDoc } from '../redactor/repackager'
 import type { PageViewport } from '../redactor/repackager'
 
 /** Progress callback: (currentPage, totalPages) */
@@ -22,11 +22,13 @@ export type RedactionProgressCallback = (page: number, total: number) => void
  *    a. Render at 300 DPI (with fallback to 240 DPI)
  *    b. Get REDACT-only entities for this page
  *    c. Burn black quads onto the canvas
- *    d. Collect canvas + viewport for repackaging
- *    e. After repackaging, release canvas memory
- *    f. Call page.cleanup()
- * 3. Repackage all pages into a single output PDF via jsPDF
- * 4. Return the output Blob
+ *    d. Embed page into jsPDF immediately after burn
+ *    e. Release canvas memory (width=0) before processing next page
+ *    f. Call page.cleanup() before processing next page
+ * 3. Finalize jsPDF document (strip metadata) and return output Blob
+ *
+ * Memory optimization: each page canvas is embedded into jsPDF and released
+ * immediately, so at most one 300 DPI canvas is held in memory at a time.
  *
  * Only entities with decision === 'REDACT' are burned. KEEP and UNCERTAIN
  * entities are left visible in the output.
@@ -49,21 +51,29 @@ export async function redactDocument(
   const { pdf, numPages } = await loadPDF(file, onPassword)
 
   try {
-    const pageCanvases: HTMLCanvasElement[] = []
-    const pageViewports: PageViewport[] = []
-
     // Build a map of page → REDACT quads for fast lookup
     const redactQuadsByPage = buildRedactQuadsMap(entities)
+
+    // jsPDF document is created incrementally — each page is embedded
+    // immediately after burning, then the canvas is released before
+    // processing the next page. This avoids holding all 300 DPI
+    // canvases in memory simultaneously.
+    let doc: ReturnType<typeof createDoc> | null = null
 
     for (let pageNum = 1; pageNum <= numPages; pageNum++) {
       const page = await pdf.getPage(pageNum)
 
       // Get the viewport at scale=1 for page dimensions in pt
       const baseViewport = page.getViewport({ scale: 1 })
-      pageViewports.push({
+      const pageViewport: PageViewport = {
         width: baseViewport.width,
         height: baseViewport.height,
-      })
+      }
+
+      // Create the jsPDF document on first page
+      if (doc === null) {
+        doc = createDoc(pageViewport)
+      }
 
       // Render the page at 300 DPI (with fallback to 240 DPI)
       let canvas: HTMLCanvasElement
@@ -85,25 +95,26 @@ export async function redactDocument(
         burnRedactions(canvas, quads, renderViewport as unknown as Viewport)
       }
 
-      pageCanvases.push(canvas)
+      // Embed page into jsPDF immediately after burn
+      addPageToDoc(doc, canvas, pageViewport, pageNum - 1)
+
+      // Release canvas memory immediately — no longer needed
+      canvas.width = 0
+      canvas.height = 0
 
       // Report progress
       onProgress?.(pageNum, numPages)
 
-      // Release page resources
+      // Release page resources before processing next page
       page.cleanup()
     }
 
-    // Repackage all page canvases into a single output PDF
-    const blob = repackage(pageCanvases, pageViewports)
-
-    // Release canvas memory
-    for (const canvas of pageCanvases) {
-      canvas.width = 0
-      canvas.height = 0
+    if (!doc) {
+      throw new Error('No pages to process')
     }
 
-    return blob
+    // Finalize the document: strip metadata and return blob
+    return finalizeDoc(doc)
   } finally {
     await destroyPDF(pdf)
   }

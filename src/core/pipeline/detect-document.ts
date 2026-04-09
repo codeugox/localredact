@@ -26,6 +26,7 @@ import {
   CITY_STATE_ZIP,
   ZIP_VALUE,
   ZIP_CONTEXT,
+  ZIP_STATE_CONTEXT,
   DOB_NUMERIC,
   DOB_WRITTEN,
   DOB_CONTEXT,
@@ -70,6 +71,8 @@ interface PatternDef {
   regex: RegExp
   /** Optional context regex for confidence boosting via 80-char lookbehind */
   contextRegex?: RegExp
+  /** Optional additional context regexes (any match triggers context boost) */
+  contextRegexAlt?: RegExp[]
   /** Base confidence when matched without context */
   baseConfidence: number
   /** Confidence when context label is found nearby */
@@ -204,10 +207,13 @@ const PATTERN_DEFS: PatternDef[] = [
     contextConfidence: BASE_CONFIDENCE.FORMAT_MATCH,
   },
   // ZIP code — context-sensitive
+  // ZIP_CONTEXT matches explicit ZIP labels (case-insensitive),
+  // ZIP_STATE_CONTEXT matches uppercase two-letter state codes (case-sensitive)
   {
     type: 'ZIP_CODE',
     regex: ZIP_VALUE,
     contextRegex: ZIP_CONTEXT,
+    contextRegexAlt: [ZIP_STATE_CONTEXT],
     baseConfidence: BASE_CONFIDENCE.NO_CONTEXT,
     contextConfidence: BASE_CONFIDENCE.MODERATE_CONTEXT,
   },
@@ -277,7 +283,16 @@ function runPatternsOnPage(
       // Context scoring: check for context label within 80 chars before match
       let confidence: number
       if (def.contextRegex) {
-        const hasContext = scoreContext(text, matchStart, def.contextRegex)
+        let hasContext = scoreContext(text, matchStart, def.contextRegex)
+        // Check alternative context regexes (e.g., case-sensitive state codes for ZIP)
+        if (!hasContext && def.contextRegexAlt) {
+          for (const altRegex of def.contextRegexAlt) {
+            if (scoreContext(text, matchStart, altRegex)) {
+              hasContext = true
+              break
+            }
+          }
+        }
         confidence = hasContext ? def.contextConfidence : def.baseConfidence
       } else {
         confidence = def.baseConfidence

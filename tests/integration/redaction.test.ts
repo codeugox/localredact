@@ -40,8 +40,8 @@ vi.mock('jspdf', () => {
 
 const mockJsPDFConstructor = vi.fn()
 
-// Import repackage after mock is set up
-import { repackage } from '@/core/redactor/repackager'
+// Import repackage and incremental assembly functions after mock is set up
+import { repackage, createDoc, addPageToDoc, finalizeDoc } from '@/core/redactor/repackager'
 
 // ─── Helpers ────────────────────────────────────────────────────────
 
@@ -387,6 +387,105 @@ describe('repackage', () => {
       'page-1',
       'NONE'
     )
+  })
+})
+
+// ─── Incremental Repackager Tests ───────────────────────────────────
+
+describe('incremental repackager (createDoc, addPageToDoc, finalizeDoc)', () => {
+  beforeEach(() => {
+    mockJsPDFConstructor.mockClear()
+    mockAddImage.mockClear()
+    mockAddPage.mockClear()
+    mockSetProperties.mockClear()
+    mockOutput.mockClear()
+    mockOutput.mockReturnValue(
+      new Blob(['%PDF-1.4 mock'], { type: 'application/pdf' })
+    )
+  })
+
+  it('should create a jsPDF doc with correct format from first page viewport', () => {
+    createDoc({ width: 612, height: 792 })
+
+    expect(mockJsPDFConstructor).toHaveBeenCalledWith({
+      unit: 'pt',
+      format: [612, 792],
+      compress: true,
+      putOnlyUsedFonts: true,
+    })
+  })
+
+  it('should add first page without calling addPage', () => {
+    const doc = createDoc({ width: 612, height: 792 })
+    const canvas = document.createElement('canvas')
+    canvas.width = 2550
+    canvas.height = 3300
+
+    addPageToDoc(doc, canvas, { width: 612, height: 792 }, 0)
+
+    expect(mockAddPage).not.toHaveBeenCalled()
+    expect(mockAddImage).toHaveBeenCalledWith(
+      canvas,
+      'PNG',
+      0,
+      0,
+      612,
+      792,
+      'page-0',
+      'NONE'
+    )
+  })
+
+  it('should call addPage for subsequent pages', () => {
+    const doc = createDoc({ width: 612, height: 792 })
+
+    const canvas1 = document.createElement('canvas')
+    addPageToDoc(doc, canvas1, { width: 612, height: 792 }, 0)
+
+    const canvas2 = document.createElement('canvas')
+    addPageToDoc(doc, canvas2, { width: 842, height: 595 }, 1)
+
+    expect(mockAddPage).toHaveBeenCalledTimes(1)
+    expect(mockAddPage).toHaveBeenCalledWith([842, 595])
+    expect(mockAddImage).toHaveBeenCalledTimes(2)
+  })
+
+  it('should allow sequential page-by-page assembly (simulating memory release)', () => {
+    // This tests the pattern used by redactDocument: add page, release canvas, repeat
+    const doc = createDoc({ width: 612, height: 792 })
+
+    for (let i = 0; i < 3; i++) {
+      const canvas = document.createElement('canvas')
+      canvas.width = 2550
+      canvas.height = 3300
+
+      addPageToDoc(doc, canvas, { width: 612, height: 792 }, i)
+
+      // Simulate canvas memory release (as redactDocument does)
+      canvas.width = 0
+      canvas.height = 0
+    }
+
+    expect(mockAddImage).toHaveBeenCalledTimes(3)
+    expect(mockAddPage).toHaveBeenCalledTimes(2) // pages 1 and 2
+  })
+
+  it('should finalize doc with metadata and return blob', () => {
+    const doc = createDoc({ width: 612, height: 792 })
+    const canvas = document.createElement('canvas')
+    addPageToDoc(doc, canvas, { width: 612, height: 792 }, 0)
+
+    const blob = finalizeDoc(doc)
+
+    expect(mockSetProperties).toHaveBeenCalledWith({
+      title: 'Redacted Document',
+      creator: '',
+      author: '',
+      subject: '',
+      keywords: '',
+    })
+    expect(mockOutput).toHaveBeenCalledWith('blob')
+    expect(blob).toBeInstanceOf(Blob)
   })
 })
 
