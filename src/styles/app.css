@@ -426,3 +426,277 @@ body {
 .footer-link:hover {
   color: var(--500);
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   Drop Screen — homepage drop zone, headline, mode selector, trust
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ─── Headline ─────────────────────────────────────────────────── */
+
+.headline {
+  margin-bottom: 32px;
+}
+
+.headline h1 {
+  font-size: clamp(40px, 5.5vw, 60px);
+  font-weight: 700;
+  line-height: 1.01;
+  letter-spacing: -0.04em;
+  color: var(--950);
+  margin-bottom: 16px;
+}
+
+/* Red underbar beneath "share." — the redaction motif */
+.u {
+  position: relative;
+  display: inline;
+}
+
+.u::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 1px;
+  height: 3px;
+  background: var(--red);
+  border-radius: 1.5px;
+}
+
+.sub {
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.62;
+  letter-spacing: -0.015em;
+  color: var(--500);
+  max-width: 390px;
+}
+
+/* ─── Drop zone ────────────────────────────────────────────────── */
+
+.drop {
+  background: var(--surface);
+  border: 1.5px solid var(--150);
+  border-radius: var(--r-lg);
+  padding: 36px 32px 32px;
+  text-align: center;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.2s ease, background 0.2s ease,
+    box-shadow 0.2s ease;
+  margin-bottom: 8px;
+}
+
+/* Corner brackets — architectural, defining the action zone boundary */
+.drop::before,
+.drop::after {
+  content: "";
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-color: var(--200);
+  border-style: solid;
+  transition: border-color 0.2s ease;
+  pointer-events: none;
+}
+
+.drop::before {
+  top: 9px;
+  left: 9px;
+  border-width: 1.5px 0 0 1.5px;
+}
+
+.drop::after {
+  bottom: 9px;
+  right: 9px;
+  border-width: 0 1.5px 1.5px 0;
+}
+
+.drop:hover,
+.drop.over {
+  border-color: var(--red);
+  background: var(--red-soft);
+  box-shadow: var(--shadow-drop), 0 0 0 3px rgba(196, 30, 30, 0.06);
+}
+
+.drop:hover::before,
+.drop:hover::after,
+.drop.over::before,
+.drop.over::after {
+  border-color: var(--red-border);
+}
+
+.drop-icon {
+  display: block;
+  margin: 0 auto 14px;
+  width: 40px;
+  height: 40px;
+}
+
+.drop-label {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  color: var(--950);
+  margin-bottom: 5px;
+}
+
+.drop-hint {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--400);
+  letter-spacing: -0.01em;
+  margin-bottom: 20px;
+}
+
+.drop-hint a {
+  color: var(--red);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-thickness: 1px;
+  cursor: pointer;
+}
+
+.drop-rule {
+  height: 1px;
+  background: var(--100);
+  margin: 0 -32px 18px;
+}
+
+.drop-spec {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 400;
+  color: var(--300);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+/* ─── Mode selector ────────────────────────────────────────────── */
+
+.modes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-bottom: 22px;
+}
+
+.mode {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  border-radius: var(--r-md);
+  border: 1.5px solid var(--150);
+  background: var(--surface);
+  cursor: pointer;
+  font-family: var(--font-ui);
+  text-align: left;
+  transition: all 0.15s ease;
+}
+
+.mode:hover {
+  border-color: var(--200);
+  background: var(--100);
+}
+
+.mode.active {
+  border-color: var(--red-border);
+  background: var(--red-soft);
+}
+
+.radio {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1.5px solid var(--200);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.15s ease;
+}
+
+.mode.active .radio {
+  border-color: var(--red);
+}
+
+.mode.active .radio::after {
+  content: "";
+  display: block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--red);
+}
+
+.mode-name {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  color: var(--950);
+  line-height: 1;
+  margin-bottom: 3px;
+}
+
+.mode-desc {
+  font-size: 10.5px;
+  font-weight: 400;
+  color: var(--400);
+  line-height: 1;
+}
+
+/* ─── Trust statement ──────────────────────────────────────────── */
+
+.trust {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--300);
+  letter-spacing: -0.01em;
+  line-height: 1.55;
+}
+
+.trust strong {
+  font-weight: 600;
+  color: var(--500);
+}
+
+.trust code {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  background: var(--100);
+  border: 1px solid var(--150);
+  padding: 1px 5px;
+  border-radius: 3px;
+  color: var(--400);
+}
+
+/* ─── Error message ────────────────────────────────────────────── */
+
+.error-message {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  margin-bottom: 8px;
+  background: var(--red-soft);
+  border: 1px solid var(--red-border);
+  border-radius: var(--r-md);
+  color: var(--red);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.error-message-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  color: var(--red);
+}
+
+.error-message-text {
+  flex: 1;
+}
