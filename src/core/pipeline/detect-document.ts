@@ -490,6 +490,21 @@ export function detectPipeline(
   }
 }
 
+// ─── No-text document detection ─────────────────────────────────────
+
+/**
+ * Check whether a document has no extractable text across all pages.
+ * This indicates a scanned/image-only PDF where text-based redaction
+ * is not possible.
+ *
+ * @param pages - Indexed pages from the detection pipeline
+ * @returns true if all pages have zero text items
+ */
+export function isNoTextDocument(pages: IndexedPage[]): boolean {
+  if (pages.length === 0) return true
+  return pages.every((page) => page.items.length === 0)
+}
+
 // ─── Async Pipeline (full document pipeline with PDF loading) ──────
 
 /**

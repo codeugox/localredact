@@ -2,6 +2,11 @@
 // File drop zone with drag-and-drop, file validation, mode selector,
 // trust statement, and error display. Password modal is mounted at
 // App.tsx level for global accessibility.
+//
+// Edge case handling:
+// - Scanned/image-only PDF detection (no text items → user-friendly error)
+// - Corrupted PDF handling (all PDF.js errors caught, sanitized messages)
+// - Rapid repeated drops (processing gate cancels previous processing)
 
 import { useRef, useCallback } from 'preact/hooks'
 import {
@@ -18,27 +23,149 @@ import type { RedactionMode } from '../core/detectors/entities'
 /** Maximum number of files accepted in a single drop. */
 const MAX_FILES = 1
 
+// ─── Processing Gate ────────────────────────────────────────────────
+
+/**
+ * A processing gate prevents concurrent file processing and supports
+ * cancellation of in-flight processing when a new file is dropped.
+ */
+export interface ProcessingGate {
+  /** Whether processing is currently active */
+  isProcessing(): boolean
+  /** Start new processing — cancels any in-flight processing. Returns AbortController. */
+  start(): AbortController
+  /** Cancel current processing */
+  cancel(): void
+}
+
+/**
+ * Create a new processing gate instance.
+ * Used by tests to create isolated gate instances.
+ */
+export function createProcessingGate(): ProcessingGate {
+  let activeController: AbortController | null = null
+
+  return {
+    isProcessing() {
+      return activeController !== null && !activeController.signal.aborted
+    },
+
+    start() {
+      // Cancel any in-flight processing first
+      if (activeController) {
+        activeController.abort()
+      }
+      activeController = new AbortController()
+      return activeController
+    },
+
+    cancel() {
+      if (activeController) {
+        activeController.abort()
+        activeController = null
+      }
+    },
+  }
+}
+
+/** Module-level processing gate singleton for production use */
+const processingGate = createProcessingGate()
+
+/**
+ * Get the module-level processing gate (for testing).
+ */
+export function getProcessingGate(): ProcessingGate {
+  return processingGate
+}
+
+// ─── Error sanitization ─────────────────────────────────────────────
+
+/**
+ * Sanitize an error into a user-friendly message.
+ * Never exposes stack traces or internal error details.
+ */
+function sanitizeError(err: unknown): string {
+  if (err instanceof Error) {
+    const msg = err.message.toLowerCase()
+
+    // Password-related errors should not reach here (handled by password modal)
+    // but guard just in case
+    if (msg.includes('password')) {
+      return 'This PDF requires a password to open.'
+    }
+
+    // If the error message already looks user-friendly (no stack traces), use it
+    // But only if it's from our own validation (e.g., validateFile)
+    if (
+      err.message.includes('PDF') ||
+      err.message.includes('file') ||
+      err.message.includes('size')
+    ) {
+      // Strip any stack trace that might have leaked into the message
+      const firstLine = err.message.split('\n')[0]
+      if (!firstLine.includes('at ') && firstLine.length < 200) {
+        return firstLine
+      }
+    }
+  }
+
+  return 'This file could not be opened as a PDF. It may be corrupted or not a valid PDF file.'
+}
+
+// ─── File processing ────────────────────────────────────────────────
+
 /**
  * Process a valid file: dispatch SET_FILE and trigger detection pipeline.
  * Wires the onPassword callback to show the global PasswordModal.
+ *
+ * Uses the processing gate to handle rapid repeated drops:
+ * - Cancels any in-flight processing when a new file is dropped
+ * - Checks abort signal after async operations to prevent stale results
  */
 async function handleValidFile(file: File): Promise<void> {
+  // Start new processing — cancels any previous in-flight processing
+  const controller = processingGate.start()
+  const signal = controller.signal
+
   dispatch({ type: 'SET_FILE', file })
   dispatch({ type: 'DETECTION_START' })
 
   try {
-    const { detectDocument } = await import('../core/pipeline/detect-document')
+    const { detectDocument, isNoTextDocument } = await import(
+      '../core/pipeline/detect-document'
+    )
+
+    // Check if cancelled before starting expensive detection
+    if (signal.aborted) return
+
     const result = await detectDocument(
       file,
       currentMode.value,
       (page, total) => {
-        dispatch({ type: 'DETECTION_PROGRESS', page, total })
+        // Only dispatch progress if this processing is still active
+        if (!signal.aborted) {
+          dispatch({ type: 'DETECTION_PROGRESS', page, total })
+        }
       },
       createOnPasswordCallback()
     )
 
+    // Check if cancelled after detection completed
+    if (signal.aborted) return
+
     // Detection succeeded — hide password modal if it was shown
     hidePasswordModal()
+
+    // Check for scanned/image-only PDF (no text items across all pages)
+    if (isNoTextDocument(result.pages)) {
+      processingGate.cancel()
+      dispatch({
+        type: 'ERROR',
+        message:
+          'This document appears to contain only scanned images. Text-based redaction is not possible. Image support is coming in a future version.',
+      })
+      return
+    }
 
     dispatch({
       type: 'DETECTION_COMPLETE',
@@ -47,8 +174,11 @@ async function handleValidFile(file: File): Promise<void> {
       totalPages: result.pages.length,
     })
   } catch (err) {
-    const message =
-      err instanceof Error ? err.message : 'An unexpected error occurred.'
+    // Only dispatch error if this processing is still active
+    if (signal.aborted) return
+
+    processingGate.cancel()
+    const message = sanitizeError(err)
     dispatch({ type: 'ERROR', message })
   }
 }

@@ -12,6 +12,10 @@ import { burnRedactions } from '../redactor/burner'
 import { createDoc, addPageToDoc, finalizeDoc } from '../redactor/repackager'
 import type { PageViewport } from '../redactor/repackager'
 
+/** DPI fallback warning message shown when 300 DPI canvas creation fails */
+export const DPI_FALLBACK_WARNING =
+  '⚠ Reduced output quality due to memory constraints. The redaction is still complete and irreversible.'
+
 /** Progress callback: (currentPage, totalPages) */
 export type RedactionProgressCallback = (page: number, total: number) => void
 
@@ -43,7 +47,8 @@ export async function redactDocument(
   file: File,
   entities: DetectedEntity[],
   onProgress?: RedactionProgressCallback,
-  onPassword?: OnPasswordCallback
+  onPassword?: OnPasswordCallback,
+  onDpiFallback?: () => void
 ): Promise<Blob> {
   // Dynamic import to avoid pulling pdfjs-dist into unit test bundles
   const { loadPDF, destroyPDF } = await import('../pdf/loader')
@@ -53,6 +58,9 @@ export async function redactDocument(
   try {
     // Build a map of page → REDACT quads for fast lookup
     const redactQuadsByPage = buildRedactQuadsMap(entities)
+
+    // Track whether DPI fallback was triggered for any page
+    let usedFallback = false
 
     // jsPDF document is created incrementally — each page is embedded
     // immediately after burning, then the canvas is released before
@@ -83,6 +91,7 @@ export async function redactDocument(
       } catch {
         // Memory pressure fallback: retry at 240 DPI
         renderScale = FALLBACK_SCALE
+        usedFallback = true
         canvas = await renderPage(page, FALLBACK_SCALE)
       }
 
@@ -111,6 +120,11 @@ export async function redactDocument(
 
     if (!doc) {
       throw new Error('No pages to process')
+    }
+
+    // Notify caller if DPI fallback was used on any page
+    if (usedFallback && onDpiFallback) {
+      onDpiFallback()
     }
 
     // Finalize the document: strip metadata and return blob

@@ -67,6 +67,9 @@ export const focusedEntityId = signal<string | null>(null)
 /** Stored password for encrypted PDFs (null when not encrypted or not yet entered) */
 export const pdfPassword = signal<string | null>(null)
 
+/** DPI fallback warning message — set when 300 DPI canvas creation fails and 240 DPI is used */
+export const dpiFallbackWarning = signal<string | null>(null)
+
 // ─── Resource tracking for cleanup ─────────────────────────────────
 
 /**
@@ -368,6 +371,7 @@ export function resetState(): void {
   focusedEntity.value = null
   focusedEntityId.value = null
   pdfPassword.value = null
+  dpiFallbackWarning.value = null
 
   // 7. Run registered cleanup callbacks (e.g., thumbnail cache clearing)
   for (const cb of resetCallbacks) {
