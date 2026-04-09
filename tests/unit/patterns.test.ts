@@ -500,10 +500,17 @@ describe('BANK_ACCOUNT', () => {
     expect(result.some(m => m.length === 18)).toBe(false)
   })
 
-  it('should have context regex matching account labels', () => {
+  it('should have context regex matching account labels with qualifier', () => {
     expect(hasMatch(BANK_ACCOUNT_CONTEXT, 'Account Number:')).toBe(true)
+    expect(hasMatch(BANK_ACCOUNT_CONTEXT, 'Account #:')).toBe(true)
     expect(hasMatch(BANK_ACCOUNT_CONTEXT, 'Acct #:')).toBe(true)
     expect(hasMatch(BANK_ACCOUNT_CONTEXT, 'account no.')).toBe(true)
+  })
+
+  it('should NOT match bare "account" without qualifier (number/#/no.)', () => {
+    expect(hasMatch(BANK_ACCOUNT_CONTEXT, 'account')).toBe(false)
+    expect(hasMatch(BANK_ACCOUNT_CONTEXT, 'Bank account context test')).toBe(false)
+    expect(hasMatch(BANK_ACCOUNT_CONTEXT, 'account:')).toBe(false)
   })
 })
 

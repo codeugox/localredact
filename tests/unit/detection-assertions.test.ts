@@ -128,10 +128,12 @@ describe('VAL-DETECT-007 — EIN context-sensitive confidence', () => {
   it('should show both labeled and unlabeled EINs with correct decisions', () => {
     // Place the two EINs far apart so the unlabeled one is outside the
     // 80-char lookbehind window of the labeled one's context label.
+    // Filler text must NOT contain 'EIN', 'Federal ID', 'Tax ID', or
+    // 'Employer Identification Number' to avoid triggering context boost.
     const items: TextItem[] = [
       makeTextItem('EIN: 12-3456789', 72, 720, 90),
-      // Padding text to push unlabeled EIN beyond 80 chars from "EIN:"
-      makeTextItem('This is some filler text that ensures the next value is well outside the context window for lookbehind.', 72, 680, 400),
+      // Neutral padding text to push unlabeled value beyond 80 chars from any context word
+      makeTextItem('This padding text increases distance beyond the lookbehind window for the next value below.', 72, 680, 400),
       makeTextItem('98-7654321', 72, 660, 62),
     ]
     const pages = [{ items, viewport: LETTER_VIEWPORT }]
@@ -145,6 +147,28 @@ describe('VAL-DETECT-007 — EIN context-sensitive confidence', () => {
     expect(labeled!.decision).toBe('REDACT')
 
     const unlabeled = eins.find((e) => e.text === '98-7654321')
+    expect(unlabeled).toBeDefined()
+    expect(unlabeled!.decision).toBe('UNCERTAIN')
+  })
+
+  it('should not boost unlabeled EIN when page title contains "context test" (no EIN word)', () => {
+    // Simulates a browser fixture PDF where the title/header text might
+    // be near the unlabeled value. Filler must not contain EIN-triggering words.
+    const items: TextItem[] = [
+      makeTextItem('Confidence sensitivity test', 72, 740, 160),
+      makeTextItem('EIN: 12-3456789', 72, 720, 90),
+      // 90+ chars of neutral filler to ensure >80 char distance from "EIN:" label
+      makeTextItem('This padding text increases distance beyond the lookbehind window for the next value listed below on this page.', 72, 680, 450),
+      makeTextItem('98-7654321', 72, 660, 62),
+    ]
+    const pages = [{ items, viewport: LETTER_VIEWPORT }]
+    const result = detectPipeline(pages, 'IDENTITY_ONLY')
+
+    const labeled = result.entities.find((e) => e.type === 'US_EIN' && e.text === '12-3456789')
+    expect(labeled).toBeDefined()
+    expect(labeled!.decision).toBe('REDACT')
+
+    const unlabeled = result.entities.find((e) => e.type === 'US_EIN' && e.text === '98-7654321')
     expect(unlabeled).toBeDefined()
     expect(unlabeled!.decision).toBe('UNCERTAIN')
   })
@@ -247,6 +271,40 @@ describe('VAL-DETECT-011 — Bank account context strictness', () => {
     ]
     const pages = [{ items, viewport: LETTER_VIEWPORT }]
     const result = detectPipeline(pages, 'FULL_REDACTION')
+
+    const bankAcct = result.entities.find((e) => e.type === 'BANK_ACCOUNT')
+    expect(bankAcct).toBeUndefined()
+  })
+
+  it('should detect labeled and skip unlabeled when both on same page with sufficient spacing', () => {
+    // Simulates browser fixture: labeled account number + neutral filler + standalone number.
+    // Title/filler must NOT contain bare 'account' or 'acct' to avoid triggering context.
+    const items: TextItem[] = [
+      makeTextItem('Bank detail verification test', 72, 740, 180),
+      makeTextItem('Account Number: ', 72, 720, 96),
+      makeTextItem('123456789012', 168, 720, 76),
+      // 90+ chars of neutral filler to push standalone number beyond 80-char context window
+      makeTextItem('This padding text increases distance beyond the lookbehind window for the next value listed below on this page.', 72, 680, 450),
+      makeTextItem('987654321012', 72, 660, 76),
+    ]
+    const pages = [{ items, viewport: LETTER_VIEWPORT }]
+    const result = detectPipeline(pages, 'IDENTITY_ONLY')
+
+    const bankAccts = result.entities.filter((e) => e.type === 'BANK_ACCOUNT')
+    expect(bankAccts).toHaveLength(1)
+    expect(bankAccts[0].text).toBe('123456789012')
+    expect(bankAccts[0].decision).toBe('REDACT')
+  })
+
+  it('should NOT match bare "account" in page title as context label', () => {
+    // Even with "Bank account" in title text near the value, the BANK_ACCOUNT_CONTEXT
+    // regex now requires a qualifier (number/#/no.) after "account".
+    const items: TextItem[] = [
+      makeTextItem('Bank account context test', 72, 740, 150),
+      makeTextItem('987654321012', 72, 720, 76),
+    ]
+    const pages = [{ items, viewport: LETTER_VIEWPORT }]
+    const result = detectPipeline(pages, 'IDENTITY_ONLY')
 
     const bankAcct = result.entities.find((e) => e.type === 'BANK_ACCOUNT')
     expect(bankAcct).toBeUndefined()
