@@ -57,6 +57,9 @@ export const processingProgress = signal<{ page: number; total: number }>({
 /** Indexed page data from the text indexer */
 export const indexedPages = signal<IndexedPage[]>([])
 
+/** Currently focused entity type in the sidebar (null when no focus) */
+export const focusedEntity = signal<string | null>(null)
+
 // ─── Computed signals ──────────────────────────────────────────────
 
 /** Count of entities with REDACT decision */
@@ -93,6 +96,7 @@ export type AppEvent =
     }
   | { type: 'TOGGLE_ENTITY'; entityId: string }
   | { type: 'SET_MODE'; mode: RedactionMode }
+  | { type: 'FOCUS_ENTITY'; entityType: string }
   | { type: 'REDACTION_START' }
   | { type: 'REDACTION_PROGRESS'; page: number; total: number }
   | { type: 'REDACTION_COMPLETE' }
@@ -163,6 +167,11 @@ export function dispatch(event: AppEvent): void {
       break
     }
 
+    case 'FOCUS_ENTITY': {
+      focusedEntity.value = event.entityType
+      break
+    }
+
     case 'REDACTION_START': {
       appState.value = 'PROCESSING'
       processingProgress.value = { page: 0, total: 0 }
@@ -208,4 +217,5 @@ export function resetState(): void {
   error.value = null
   processingProgress.value = { page: 0, total: 0 }
   indexedPages.value = []
+  focusedEntity.value = null
 }

@@ -942,3 +942,269 @@ body {
   background: var(--red-hover);
   border-color: var(--red-hover);
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   Sidebar Panel — mode tabs, entity list, callout, legend
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ─── Panel block with bottom border ───────────────────────────── */
+
+.pb {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--150);
+  flex-shrink: 0;
+}
+
+/* ─── Section label (mono uppercase) ───────────────────────────── */
+
+.sec-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 500;
+  color: var(--300);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 9px;
+}
+
+/* ─── Mode tabs (segmented control) ────────────────────────────── */
+
+.tabs {
+  display: flex;
+  background: var(--100);
+  border: 1px solid var(--150);
+  border-radius: 5px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.tab {
+  flex: 1;
+  padding: 6px 4px;
+  border-radius: 3px;
+  border: none;
+  background: none;
+  font-family: var(--font-ui);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--400);
+  cursor: pointer;
+  letter-spacing: -0.025em;
+  transition: all 0.15s ease;
+  line-height: 1;
+}
+
+.tab.active {
+  background: var(--surface);
+  color: var(--950);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.07);
+}
+
+/* ─── Entity scrollable list ───────────────────────────────────── */
+
+.entity-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 12px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--150) transparent;
+}
+
+/* ─── Group label ──────────────────────────────────────────────── */
+
+.group-label {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  font-weight: 500;
+  color: var(--300);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 6px 4px 4px;
+}
+
+/* ─── Entity row ───────────────────────────────────────────────── */
+
+.entity {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.12s ease;
+  user-select: none;
+  border: 1px solid transparent;
+}
+
+.entity:hover {
+  background: var(--100);
+}
+
+.entity.active {
+  background: var(--100);
+  border-color: var(--150);
+}
+
+/* ─── Pip (vertical color indicator) ───────────────────────────── */
+
+.pip {
+  width: 2.5px;
+  height: 18px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.pip-r {
+  background: var(--red);
+}
+
+.pip-g {
+  background: var(--green);
+}
+
+.pip-a {
+  background: var(--amber);
+}
+
+/* ─── Entity name and count ────────────────────────────────────── */
+
+.entity-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--700);
+  flex: 1;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.entity-count {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--300);
+}
+
+/* ─── Tags ─────────────────────────────────────────────────────── */
+
+.tag {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 5px;
+  border-radius: 3px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.tag-keep {
+  color: var(--green);
+  background: var(--green-soft);
+  border: 1px solid var(--green-border);
+}
+
+.tag-review {
+  color: var(--amber);
+  background: var(--amber-soft);
+  border: 1px solid var(--amber-border);
+}
+
+/* ─── Entity separator ─────────────────────────────────────────── */
+
+.entity-sep {
+  height: 1px;
+  background: var(--150);
+  margin: 5px 4px;
+}
+
+/* ─── Callout (uncertain items warning) ────────────────────────── */
+
+.callout {
+  margin: 10px 12px 0;
+  padding: 10px 12px;
+  border-radius: 7px;
+  background: var(--amber-soft);
+  border: 1px solid var(--amber-border);
+  flex-shrink: 0;
+  transition: opacity 0.2s ease;
+}
+
+.callout.hidden {
+  display: none;
+}
+
+.callout-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+}
+
+.callout-icon {
+  flex-shrink: 0;
+  color: var(--amber);
+  margin-top: 1px;
+}
+
+.callout-head {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--amber);
+  letter-spacing: -0.015em;
+}
+
+.callout-sub {
+  font-size: 10.5px;
+  color: var(--amber);
+  opacity: 0.65;
+  margin-top: 2px;
+  padding-left: 21px;
+}
+
+/* ─── Legend ────────────────────────────────────────────────────── */
+
+.legend {
+  padding: 12px 16px 14px;
+  border-top: 1px solid var(--150);
+  flex-shrink: 0;
+}
+
+.legend-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 3px 0;
+}
+
+.swatch {
+  width: 18px;
+  height: 11px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.sw-r {
+  background: var(--red-soft);
+  border-left: 2.5px solid var(--red);
+}
+
+.sw-g {
+  background: var(--green-soft);
+  border-left: 2.5px solid var(--green);
+}
+
+.sw-a {
+  background: var(--amber-soft);
+  border: 1.5px dashed var(--amber-border);
+}
+
+.legend-text {
+  font-size: 11px;
+  color: var(--500);
+  flex: 1;
+}
+
+.legend-hint {
+  font-size: 10px;
+  color: var(--300);
+  font-style: italic;
+}
