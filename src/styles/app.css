@@ -242,6 +242,16 @@ body {
   flex-shrink: 0;
 }
 
+/* ─── Highlight overlay SVG ─────────────────────────────────────── */
+
+.highlight-overlay {
+  pointer-events: none;
+}
+
+.highlight-overlay g {
+  pointer-events: auto;
+}
+
 /* ─── Highlight state classes (SVG overlay) ────────────────────── */
 
 /* REDACT — red filled highlight */
