@@ -1,5 +1,7 @@
 import { defineConfig, type Plugin } from 'vite'
 import preact from '@preact/preset-vite'
+import { copyFileSync, existsSync, mkdirSync } from 'fs'
+import { resolve } from 'path'
 
 /**
  * In dev mode, Vite injects inline scripts for HMR and module loading.
@@ -33,8 +35,26 @@ function devCspPlugin(): Plugin {
   }
 }
 
+/**
+ * Copy pdfjs-dist worker to public/ so it is served as a raw static file
+ * without Vite transforms. This guarantees the worker loads in Safari,
+ * which has limited support for `new Worker(url, { type: "module" })` and
+ * breaks when Vite injects HMR code into the served module.
+ */
+function copyPdfjsWorker(): Plugin {
+  return {
+    name: 'copy-pdfjs-worker',
+    buildStart() {
+      const src = resolve('node_modules/pdfjs-dist/build/pdf.worker.min.mjs')
+      const destDir = resolve('public')
+      if (!existsSync(destDir)) mkdirSync(destDir, { recursive: true })
+      copyFileSync(src, resolve(destDir, 'pdf.worker.min.mjs'))
+    },
+  }
+}
+
 export default defineConfig({
-  plugins: [devCspPlugin(), preact()],
+  plugins: [copyPdfjsWorker(), devCspPlugin(), preact()],
   base: './',
   optimizeDeps: {
     exclude: ['pdfjs-dist'],
