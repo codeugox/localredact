@@ -1,0 +1,247 @@
+{
+  "groupId": "preview-a",
+  "testedAt": "2026-04-09T09:59:32Z",
+  "isolation": {
+    "surface": "agent-browser",
+    "appUrl": "http://localhost:5173",
+    "sessionName": "preview-a-20260409",
+    "missionDir": "/Users/macbookpro/.factory/missions/03700c5a-5a07-4ab7-b688-0280f2e4ac86",
+    "evidenceDir": "/Users/macbookpro/.factory/missions/03700c5a-5a07-4ab7-b688-0280f2e4ac86/evidence/ui/preview-a"
+  },
+  "toolsUsed": [
+    "agent-browser"
+  ],
+  "assertions": [
+    {
+      "id": "VAL-PREV-001",
+      "title": "Three highlight states render with correct visual treatment",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Upload preview-core.pdf and inspect highlight overlay",
+          "expected": "REDACT, KEEP, and UNCERTAIN highlights all visible simultaneously",
+          "observed": "15 highlights rendered with decisions REDACT=13, KEEP=1, UNCERTAIN=1"
+        },
+        {
+          "action": "Query DOM/styles for one sample of each decision",
+          "expected": "REDACT red-tinted fill, KEEP green-tinted fill, UNCERTAIN amber dashed pulse",
+          "observed": "UNCERTAIN sample showed strokeDasharray '4px, 2px' and animationName 'hl-pulse'; REDACT/KEEP classes and color styles matched spec"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "ui/preview-a/VAL-PREV-001-highlight-states.png"
+        ],
+        "dom": [
+          "ui/preview-a/VAL-PREV-001-data-decision.json",
+          "ui/preview-a/VAL-PREV-001-style-check.json"
+        ],
+        "consoleErrors": "none (ui/preview-a/VAL-PREV-001-console-errors.txt)",
+        "network": "No requests captured (ui/preview-a/network-requests.txt)"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-PREV-002",
+      "title": "Click highlight toggles decision state",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Capture baseline decisions for one REDACT, one KEEP, and one UNCERTAIN highlight",
+          "expected": "Baseline contains REDACT/KEEP/UNCERTAIN",
+          "observed": "entity-16=REDACT, entity-29=KEEP, entity-32=UNCERTAIN"
+        },
+        {
+          "action": "Click REDACT highlight",
+          "expected": "REDACT becomes KEEP",
+          "observed": "entity-16 changed to KEEP"
+        },
+        {
+          "action": "Click KEEP highlight",
+          "expected": "KEEP becomes REDACT",
+          "observed": "entity-29 changed to REDACT"
+        },
+        {
+          "action": "Click UNCERTAIN highlight",
+          "expected": "UNCERTAIN resolves to REDACT and pulsing stops",
+          "observed": "entity-32 changed to REDACT; animationName became 'none'"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "ui/preview-a/VAL-PREV-002-after-clicks.png"
+        ],
+        "dom": [
+          "ui/preview-a/VAL-PREV-002-before.json",
+          "ui/preview-a/VAL-PREV-002-after-red-click.json",
+          "ui/preview-a/VAL-PREV-002-after-keep-click.json",
+          "ui/preview-a/VAL-PREV-002-after-uncertain-click.json"
+        ],
+        "consoleErrors": "none (ui/preview-a/VAL-PREV-002-console-errors.txt)",
+        "network": "No requests captured (ui/preview-a/network-requests.txt)"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-PREV-003",
+      "title": "Tooltip appears on hover with entity type, matched text, and action",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Hover REDACT highlight",
+          "expected": "Tooltip shows entity type, matched text, and 'Keep instead' action",
+          "observed": "Tooltip text included US_SSN + matched value + button 'Keep instead'"
+        },
+        {
+          "action": "Hover KEEP highlight",
+          "expected": "Tooltip shows entity type, matched text, and 'Remove instead' action",
+          "observed": "Tooltip text included MONEY + matched value + button 'Remove instead'"
+        },
+        {
+          "action": "Move mouse off highlight",
+          "expected": "Tooltip hides",
+          "observed": "Tooltip no longer present in DOM"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "ui/preview-a/VAL-PREV-003-tooltip-red-hover.png",
+          "ui/preview-a/VAL-PREV-003-tooltip-keep-hover.png"
+        ],
+        "dom": [
+          "ui/preview-a/VAL-PREV-003-tooltip-red.json",
+          "ui/preview-a/VAL-PREV-003-tooltip-keep.json",
+          "ui/preview-a/VAL-PREV-003-tooltip-hidden-after-leave.json"
+        ],
+        "consoleErrors": "none (ui/preview-a/VAL-PREV-003-console-errors.txt)",
+        "network": "No requests captured (ui/preview-a/network-requests.txt)"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-PREV-004",
+      "title": "Entity list sidebar shows groups with correct counts",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Inspect sidebar groups and chips",
+          "expected": "Removing/Keeping/Your decision groups all visible with counts",
+          "observed": "All three group headings present with chips Removing=13, Keeping=1, Your decision=1"
+        },
+        {
+          "action": "Compare chip sum with total detected highlights",
+          "expected": "Count chip sum equals total entities",
+          "observed": "13+1+1=15 equals highlight total 15"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "ui/preview-a/VAL-PREV-004-sidebar-groups.png"
+        ],
+        "dom": [
+          "ui/preview-a/VAL-PREV-004-dom-query.json"
+        ],
+        "consoleErrors": "none (ui/preview-a/VAL-PREV-004-console-errors.txt)",
+        "network": "No requests captured (ui/preview-a/network-requests.txt)"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-PREV-005",
+      "title": "Click entity row scrolls document and focuses highlight",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Click sidebar entity row",
+          "expected": "Corresponding highlight gets .hl-focused and row gets .active",
+          "observed": "One highlight had class 'hl-r hl-focused' and clicked row had class 'entity active'"
+        },
+        {
+          "action": "Click a different row",
+          "expected": "Previous focus clears and new row/highlight becomes active",
+          "observed": "Focused entity changed between clicks while focusedCount remained 1"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "ui/preview-a/VAL-PREV-005-row-click-focus.png"
+        ],
+        "dom": [
+          "ui/preview-a/VAL-PREV-005-before-focus.json",
+          "ui/preview-a/VAL-PREV-005-after-focus.json",
+          "ui/preview-a/VAL-PREV-005-focus-switch-step1.json",
+          "ui/preview-a/VAL-PREV-005-focus-switch-step2.json"
+        ],
+        "consoleErrors": "none (ui/preview-a/VAL-PREV-005-console-errors.txt)",
+        "network": "No requests captured (ui/preview-a/network-requests.txt)"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-PREV-006",
+      "title": "Page navigation via thumbnails and prev/next controls",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Upload preview-multipage.pdf and inspect page 1 controls",
+          "expected": "Page 1 indicator shown; prev disabled; next enabled",
+          "observed": "Indicator 'Page 1 of 3'; prevDisabled=true; nextDisabled=false"
+        },
+        {
+          "action": "Click next twice",
+          "expected": "Navigate to page 2 then page 3; next disabled on last page",
+          "observed": "Indicators advanced to 'Page 2 of 3' then 'Page 3 of 3'; nextDisabled=true on page 3"
+        },
+        {
+          "action": "Click prev then click page-1 thumbnail",
+          "expected": "Return to page 2 then page 1; boundary disabled states restored",
+          "observed": "Indicator returned to page 2 then page 1; on page 1 prevDisabled=true and activeThumbIndex=1"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "ui/preview-a/VAL-PREV-006-page1-initial.png",
+          "ui/preview-a/VAL-PREV-006-page2-next.png",
+          "ui/preview-a/VAL-PREV-006-page3-next.png",
+          "ui/preview-a/VAL-PREV-006-page2-prev.png",
+          "ui/preview-a/VAL-PREV-006-page1-thumbnail.png"
+        ],
+        "dom": [
+          "ui/preview-a/VAL-PREV-006-state-page1.json",
+          "ui/preview-a/VAL-PREV-006-state-page2.json",
+          "ui/preview-a/VAL-PREV-006-state-page3.json",
+          "ui/preview-a/VAL-PREV-006-state-page2-prev.json",
+          "ui/preview-a/VAL-PREV-006-state-page1-thumbnail.json"
+        ],
+        "consoleErrors": "none (ui/preview-a/VAL-PREV-006-console-errors.txt)",
+        "network": "No requests captured (ui/preview-a/network-requests.txt)"
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [
+    {
+      "description": "The drop-zone UI exposes only a styled button; direct file attachment required temporarily exposing the hidden input[type=file] to use agent-browser upload.",
+      "resolved": true,
+      "resolution": "Used in-session DOM style override via agent-browser eval to expose the existing file input, then uploaded fixtures normally.",
+      "affectedAssertions": [
+        "VAL-PREV-001",
+        "VAL-PREV-002",
+        "VAL-PREV-003",
+        "VAL-PREV-004",
+        "VAL-PREV-005",
+        "VAL-PREV-006"
+      ]
+    },
+    {
+      "description": "One KEEP highlight did not toggle consistently with coordinate-based mouse click due hit-target precision in SVG overlay during automation.",
+      "resolved": true,
+      "resolution": "Triggered click event directly on the targeted highlight DOM node to validate decision transition for that state.",
+      "affectedAssertions": [
+        "VAL-PREV-002"
+      ]
+    }
+  ],
+  "blockers": [],
+  "summary": "Tested 6 assertions (VAL-PREV-001..006): 6 passed, 0 failed, 0 blocked."
+}

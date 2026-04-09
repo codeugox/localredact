@@ -184,12 +184,14 @@ const PATTERN_DEFS: PatternDef[] = [
     baseConfidence: BASE_CONFIDENCE.NO_CONTEXT,
     contextConfidence: BASE_CONFIDENCE.WITH_CONTEXT,
   },
-  // Bank account — context-sensitive (broader: any 8-17 digit number)
+  // Bank account — context-sensitive (broader: any 8-17 digit number).
+  // Without context label, confidence is below DISCARD threshold to avoid
+  // false positives on standalone numbers (VAL-DETECT-011).
   {
     type: 'BANK_ACCOUNT',
     regex: BANK_ACCOUNT_VALUE,
     contextRegex: BANK_ACCOUNT_CONTEXT,
-    baseConfidence: BASE_CONFIDENCE.NO_CONTEXT,
+    baseConfidence: BASE_CONFIDENCE.NO_CONTEXT_DISCARD,
     contextConfidence: BASE_CONFIDENCE.WITH_CONTEXT,
   },
   // Money with $ symbol
@@ -244,8 +246,25 @@ export function resetEntityCounter(): void {
 // ─── Pattern Runner ─────────────────────────────────────────────────
 
 /**
+ * Check whether two text offset ranges overlap.
+ */
+function offsetRangesOverlap(
+  a: { start: number; end: number },
+  b: { start: number; end: number }
+): boolean {
+  return a.start < b.end && b.start < a.end
+}
+
+/** Maximum gap between STREET_ADDRESS end and CITY_STATE_ZIP start for address merging */
+const ADDRESS_MERGE_GAP = 5
+
+/**
  * Run all pattern definitions against a single indexed page.
  * Returns raw (unmerged) entities for the page.
+ *
+ * Post-detection:
+ * - Suppresses entities overlapping credit card candidates that failed Luhn (VAL-DETECT-005)
+ * - Merges adjacent STREET_ADDRESS + CITY_STATE_ZIP into ADDRESS entities (VAL-DETECT-012)
  */
 function runPatternsOnPage(
   page: IndexedPage,
@@ -255,6 +274,11 @@ function runPatternsOnPage(
   const { text } = page
 
   if (text.length === 0) return entities
+
+  // Track offsets of credit card candidates that fail Luhn validation.
+  // These should suppress any overlapping detections from other patterns
+  // (e.g., BANK_ACCOUNT matching the same 16-digit number). (VAL-DETECT-005)
+  const failedCreditCardOffsets: Array<{ start: number; end: number }> = []
 
   for (const def of PATTERN_DEFS) {
     // Create a fresh regex instance to reset lastIndex
@@ -277,7 +301,23 @@ function runPatternsOnPage(
 
       // Post-match validation (e.g., Luhn for credit cards)
       if (def.validate && !def.validate(matchedText)) {
+        // Record failed credit card offsets so other patterns don't match them
+        if (def.type === 'CREDIT_CARD') {
+          failedCreditCardOffsets.push({ start: matchStart, end: matchEnd })
+        }
         continue
+      }
+
+      // Skip matches that overlap with failed credit card candidates.
+      // A 16-digit number that looks like a credit card but fails Luhn
+      // should not be detected as BANK_ACCOUNT or any other type.
+      if (def.type !== 'CREDIT_CARD') {
+        const overlapsFailedCC = failedCreditCardOffsets.some((ccOffset) =>
+          offsetRangesOverlap(ccOffset, { start: matchStart, end: matchEnd })
+        )
+        if (overlapsFailedCC) {
+          continue
+        }
       }
 
       // Context scoring: check for context label within 80 chars before match
@@ -329,7 +369,70 @@ function runPatternsOnPage(
     }
   }
 
-  return entities
+  // Post-detection: merge STREET_ADDRESS + CITY_STATE_ZIP into ADDRESS (VAL-DETECT-012).
+  // When a STREET_ADDRESS is immediately followed by a CITY_STATE_ZIP (within ADDRESS_MERGE_GAP
+  // chars in the normalized string), combine them into a single ADDRESS entity.
+  return mergeAddressEntities(entities)
+}
+
+/**
+ * Merge adjacent STREET_ADDRESS + CITY_STATE_ZIP entities into a single ADDRESS entity.
+ * Both entities must be on the same page and within ADDRESS_MERGE_GAP chars of each other
+ * in the normalized string.
+ */
+function mergeAddressEntities(entities: DetectedEntity[]): DetectedEntity[] {
+  if (entities.length < 2) return entities
+
+  // Sort by textOffset.start for sequential scanning
+  const sorted = [...entities].sort((a, b) => a.textOffset.start - b.textOffset.start)
+
+  const result: DetectedEntity[] = []
+  const consumed = new Set<string>()
+
+  for (let i = 0; i < sorted.length; i++) {
+    const current = sorted[i]
+    if (consumed.has(current.id)) continue
+
+    if (current.type === 'STREET_ADDRESS') {
+      // Look for a CITY_STATE_ZIP immediately following
+      const next = sorted.find(
+        (e) =>
+          !consumed.has(e.id) &&
+          e.id !== current.id &&
+          e.type === 'CITY_STATE_ZIP' &&
+          e.page === current.page &&
+          e.textOffset.start >= current.textOffset.end &&
+          e.textOffset.start - current.textOffset.end <= ADDRESS_MERGE_GAP
+      )
+
+      if (next) {
+        // Merge into a single ADDRESS entity
+        consumed.add(current.id)
+        consumed.add(next.id)
+        result.push({
+          id: current.id,
+          type: 'ADDRESS',
+          text: current.text + '\n' + next.text,
+          layer: current.layer,
+          confidence: Math.max(current.confidence, next.confidence),
+          decision: current.confidence >= next.confidence ? current.decision : next.decision,
+          page: current.page,
+          textOffset: {
+            start: current.textOffset.start,
+            end: next.textOffset.end,
+          },
+          quads: [...current.quads, ...next.quads],
+        })
+        continue
+      }
+    }
+
+    if (!consumed.has(current.id)) {
+      result.push(current)
+    }
+  }
+
+  return result
 }
 
 // ─── Pipeline Orchestrator (synchronous, for use with pre-loaded pages) ──

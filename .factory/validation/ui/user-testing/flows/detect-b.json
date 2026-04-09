@@ -1,0 +1,182 @@
+{
+  "groupId": "detect-b",
+  "testedAt": "2026-04-09T09:40:52.251938Z",
+  "isolation": {
+    "surface": "agent-browser",
+    "appUrl": "http://localhost:5173",
+    "missionDir": "/Users/macbookpro/.factory/missions/03700c5a-5a07-4ab7-b688-0280f2e4ac86",
+    "browserSession": "detect-b-03700c5a",
+    "evidenceDir": "/Users/macbookpro/.factory/missions/03700c5a-5a07-4ab7-b688-0280f2e4ac86/evidence/ui/detect-b/"
+  },
+  "toolsUsed": [
+    "agent-browser",
+    "node"
+  ],
+  "assertions": [
+    {
+      "id": "VAL-DETECT-007",
+      "title": "Context-sensitive confidence — labeled EIN vs. unlabeled",
+      "status": "fail",
+      "steps": [
+        {
+          "action": "Upload fixture containing 'EIN: 12-3456789' and standalone '98-7654321'",
+          "expected": "Labeled EIN red REDACT and unlabeled EIN amber UNCERTAIN",
+          "observed": "Only one EIN highlight rendered as REDACT; standalone EIN was not highlighted"
+        }
+      ],
+      "evidence": {
+        "fixtures": [
+          "ui/detect-b/VAL-DETECT-007-context-ein.pdf"
+        ],
+        "screenshots": [
+          "ui/detect-b/VAL-DETECT-007-ein-confidence.png"
+        ],
+        "consoleErrors": "none",
+        "network": "none"
+      },
+      "issues": "Unlabeled EIN did not produce UNCERTAIN highlight."
+    },
+    {
+      "id": "VAL-DETECT-008",
+      "title": "No-PII document produces no highlights",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Upload no-PII fixture and inspect preview",
+          "expected": "Zero highlights, zero counts, and download enabled",
+          "observed": "No highlight elements were rendered and Download button was enabled; no errors observed"
+        }
+      ],
+      "evidence": {
+        "fixtures": [
+          "ui/detect-b/VAL-DETECT-008-no-pii.pdf"
+        ],
+        "screenshots": [
+          "ui/detect-b/VAL-DETECT-008-no-highlights.png"
+        ],
+        "consoleErrors": "none",
+        "network": "none"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-DETECT-009",
+      "title": "Duplicate entities are not double-highlighted",
+      "status": "fail",
+      "steps": [
+        {
+          "action": "Upload fixture with same SSN appearing twice on one line",
+          "expected": "Each occurrence highlighted once and sidebar count reflects 2 occurrences",
+          "observed": "Two highlight rects rendered, but sidebar showed Social Security count ×1"
+        }
+      ],
+      "evidence": {
+        "fixtures": [
+          "ui/detect-b/VAL-DETECT-009-duplicate-ssn.pdf"
+        ],
+        "screenshots": [
+          "ui/detect-b/VAL-DETECT-009-duplicate-ssn.png"
+        ],
+        "consoleErrors": "none",
+        "network": "none"
+      },
+      "issues": "Sidebar occurrence count did not match the two visible SSN occurrences."
+    },
+    {
+      "id": "VAL-DETECT-010",
+      "title": "Multi-page detection finds entities on all pages",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Upload 3-page fixture (SSN page 1, email page 2, phone page 3)",
+          "expected": "Entities detected on their respective pages and represented in sidebar",
+          "observed": "Sidebar listed SSN, email, and phone; page indicator navigated Page 1/3 to Page 3/3 with highlights shown on each page screenshot"
+        }
+      ],
+      "evidence": {
+        "fixtures": [
+          "ui/detect-b/VAL-DETECT-010-multipage.pdf"
+        ],
+        "screenshots": [
+          "ui/detect-b/VAL-DETECT-010-page1.png",
+          "ui/detect-b/VAL-DETECT-010-page2.png",
+          "ui/detect-b/VAL-DETECT-010-page3.png"
+        ],
+        "consoleErrors": "none",
+        "network": "none"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-DETECT-011",
+      "title": "Bank account context-sensitive matching",
+      "status": "fail",
+      "steps": [
+        {
+          "action": "Upload fixture with 'Account Number: 123456789012' and standalone '987654321012'",
+          "expected": "Only labeled account value highlighted; label and standalone unlabeled number not highlighted",
+          "observed": "Two highlight rects rendered (one aligned with labeled value line, one aligned with standalone number line)"
+        }
+      ],
+      "evidence": {
+        "fixtures": [
+          "ui/detect-b/VAL-DETECT-011-bank-context.pdf"
+        ],
+        "screenshots": [
+          "ui/detect-b/VAL-DETECT-011-bank-context.png"
+        ],
+        "consoleErrors": "none",
+        "network": "none"
+      },
+      "issues": "Standalone unlabeled account number was highlighted."
+    },
+    {
+      "id": "VAL-DETECT-012",
+      "title": "Multi-line address produces quads on separate lines",
+      "status": "fail",
+      "steps": [
+        {
+          "action": "Upload two-line address fixture",
+          "expected": "One address entity spanning both lines via multi-line quads",
+          "observed": "Both lines were highlighted, but sidebar split them into two entities (Street address ×1 and City/state/ZIP ×1)"
+        }
+      ],
+      "evidence": {
+        "fixtures": [
+          "ui/detect-b/VAL-DETECT-012-multiline-address.pdf"
+        ],
+        "screenshots": [
+          "ui/detect-b/VAL-DETECT-012-multiline-address.png"
+        ],
+        "consoleErrors": "none",
+        "network": "none"
+      },
+      "issues": "Address was not treated as a single multi-line entity."
+    }
+  ],
+  "frictions": [
+    {
+      "description": "Hidden file input (`display:none`) was not directly targetable from interactive snapshot for upload actions.",
+      "resolved": true,
+      "resolution": "Temporarily surfaced the existing file input via in-session DOM style change before each upload (no app source edits).",
+      "affectedAssertions": [
+        "VAL-DETECT-007",
+        "VAL-DETECT-008",
+        "VAL-DETECT-009",
+        "VAL-DETECT-010",
+        "VAL-DETECT-011",
+        "VAL-DETECT-012"
+      ]
+    },
+    {
+      "description": "Text-locator click for 'Next page' timed out once during page navigation.",
+      "resolved": true,
+      "resolution": "Switched to snapshot ref click for the Next button and navigation proceeded normally.",
+      "affectedAssertions": [
+        "VAL-DETECT-010"
+      ]
+    }
+  ],
+  "blockers": [],
+  "summary": "Tested 6 assertions: 2 passed, 4 failed, 0 blocked. Failures were in context-sensitive EIN/account handling, duplicate count accuracy, and multi-line address entity grouping."
+}

@@ -25,6 +25,9 @@ export const BASE_CONFIDENCE = {
   MODERATE_CONTEXT: 0.90,
   /** Regex match without context (higher false positive risk) */
   NO_CONTEXT: 0.65,
+  /** Regex match without context for high-ambiguity patterns (e.g., bank account).
+   *  Below DISCARD threshold so these are dropped without context. */
+  NO_CONTEXT_DISCARD: 0.50,
   /** Inherently high-confidence format match (e.g., email, SSN formatted) */
   FORMAT_MATCH: 0.99,
   /** Unformatted match with higher ambiguity */
