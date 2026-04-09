@@ -104,10 +104,11 @@ export function DropScreen() {
     const files = e.dataTransfer?.files
     if (!files || files.length === 0) return
 
-    // Handle multiple files: only accept first, warn if multiple
+    // Reject multiple files: show message and don't process any
     if (files.length > MAX_FILES) {
-      // Still process the first valid PDF, but only one at a time
-      error.value = null
+      error.value = 'Please drop one file at a time.'
+      appState.value = 'ERROR'
+      return
     }
 
     processFile(files[0])

@@ -30,6 +30,12 @@ const tooltipX = signal<number>(0)
 const tooltipY = signal<number>(0)
 const tooltipFlipped = signal<boolean>(false)
 
+/** Tooltip hide delay timer */
+let tooltipHideTimer: ReturnType<typeof setTimeout> | null = null
+
+/** Tooltip hide delay in ms — allows mouse to move from highlight to tooltip */
+const TOOLTIP_HIDE_DELAY = 180
+
 // ─── Component ──────────────────────────────────────────────────────
 
 /**
@@ -60,6 +66,12 @@ export function DocumentViewer() {
   // ─── Tooltip handlers ───────────────────────────────────────────
 
   const handleHighlightEnter = useCallback((entityId: string, rect: DOMRect) => {
+    // Cancel any pending hide when entering a highlight
+    if (tooltipHideTimer) {
+      clearTimeout(tooltipHideTimer)
+      tooltipHideTimer = null
+    }
+
     const entity = entities.value.find((e) => e.id === entityId)
     if (!entity) return
 
@@ -78,7 +90,33 @@ export function DocumentViewer() {
   }, [])
 
   const handleHighlightLeave = useCallback(() => {
-    tooltipEntity.value = null
+    // Delay hiding the tooltip to allow mouse to move to tooltip element
+    if (tooltipHideTimer) {
+      clearTimeout(tooltipHideTimer)
+    }
+    tooltipHideTimer = setTimeout(() => {
+      tooltipEntity.value = null
+      tooltipHideTimer = null
+    }, TOOLTIP_HIDE_DELAY)
+  }, [])
+
+  /** Cancel hide timer when mouse enters the tooltip container */
+  const handleTooltipEnter = useCallback(() => {
+    if (tooltipHideTimer) {
+      clearTimeout(tooltipHideTimer)
+      tooltipHideTimer = null
+    }
+  }, [])
+
+  /** Start hide timer when mouse leaves the tooltip container */
+  const handleTooltipLeave = useCallback(() => {
+    if (tooltipHideTimer) {
+      clearTimeout(tooltipHideTimer)
+    }
+    tooltipHideTimer = setTimeout(() => {
+      tooltipEntity.value = null
+      tooltipHideTimer = null
+    }, TOOLTIP_HIDE_DELAY)
   }, [])
 
   // Load PDF when file changes — pass stored password for encrypted PDFs
@@ -218,6 +256,8 @@ export function DocumentViewer() {
             x={ttX}
             y={ttY}
             flipped={ttFlipped}
+            onMouseEnter={handleTooltipEnter}
+            onMouseLeave={handleTooltipLeave}
           />
         )}
       </div>

@@ -7,6 +7,9 @@ import {
   entities,
   currentMode,
   currentFile,
+  currentPage,
+  redactCount,
+  keepCount,
   uncertainCount,
   focusedEntity,
   dispatch,
@@ -126,6 +129,19 @@ async function rerunDetection(file: File, mode: RedactionMode): Promise<void> {
   }
 }
 
+// ─── Scroll helper ──────────────────────────────────────────────────
+
+/**
+ * Scroll the document viewport to the first SVG rect with the given entity ID.
+ */
+function scrollToEntity(entityId: string): void {
+  const group = document.querySelector(`[data-entity-id="${entityId}"]`)
+  if (!group) return
+  const rect = group.querySelector('rect')
+  if (!rect) return
+  rect.scrollIntoView({ behavior: 'smooth', block: 'center' })
+}
+
 // ─── Component ──────────────────────────────────────────────────────
 
 export function SummaryPanel() {
@@ -135,6 +151,9 @@ export function SummaryPanel() {
   const active = focusedEntity.value
 
   const { removing, keeping, uncertain: uncertainGroups } = groupEntities(entityList)
+  const removingTotal = redactCount.value
+  const keepingTotal = keepCount.value
+  const uncertainTotal = uncertainCount.value
 
   // ─── Mode tab handler ──────────────────────────────────────────
 
@@ -153,6 +172,24 @@ export function SummaryPanel() {
 
   const handleEntityClick = useCallback((entityType: EntityType) => {
     dispatch({ type: 'FOCUS_ENTITY', entityType })
+
+    // Find the first entity of this type to scroll to
+    const entityList = entities.value
+    const target = entityList.find((e) => e.type === entityType)
+    if (!target) return
+
+    // Navigate to the entity's page if needed
+    if (currentPage.value !== target.page) {
+      dispatch({ type: 'SET_PAGE', page: target.page })
+      // After page change, scroll after a short delay to allow render
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          scrollToEntity(target.id)
+        })
+      })
+    } else {
+      scrollToEntity(target.id)
+    }
   }, [])
 
   return (
@@ -183,7 +220,13 @@ export function SummaryPanel() {
         {/* Removing group */}
         {removing.length > 0 && (
           <>
-            <div class="group-label">Removing</div>
+            <div class="group-label">
+              Removing
+              <span class="group-count count-chip count-chip--redact">
+                <span class="count-chip-dot count-chip-dot--redact" />
+                {removingTotal}
+              </span>
+            </div>
             {removing.map((group) => (
               <div
                 key={`r-${group.type}`}
@@ -207,7 +250,13 @@ export function SummaryPanel() {
         {/* Keeping group */}
         {keeping.length > 0 && (
           <>
-            <div class="group-label">Keeping</div>
+            <div class="group-label">
+              Keeping
+              <span class="group-count count-chip count-chip--keep">
+                <span class="count-chip-dot count-chip-dot--keep" />
+                {keepingTotal}
+              </span>
+            </div>
             {keeping.map((group) => (
               <div
                 key={`k-${group.type}`}
@@ -231,7 +280,13 @@ export function SummaryPanel() {
         {/* Your decision group */}
         {uncertainGroups.length > 0 && (
           <>
-            <div class="group-label">Your decision</div>
+            <div class="group-label">
+              Your decision
+              <span class="group-count count-chip count-chip--uncertain">
+                <span class="count-chip-dot count-chip-dot--uncertain" />
+                {uncertainTotal}
+              </span>
+            </div>
             {uncertainGroups.map((group) => (
               <div
                 key={`u-${group.type}`}

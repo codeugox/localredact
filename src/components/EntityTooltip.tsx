@@ -40,6 +40,10 @@ export interface EntityTooltipProps {
   y: number
   /** Whether tooltip is flipped below the highlight (<80px from top) */
   flipped: boolean
+  /** Called when mouse enters the tooltip container */
+  onMouseEnter?: () => void
+  /** Called when mouse leaves the tooltip container */
+  onMouseLeave?: () => void
 }
 
 // ─── Action text helper ─────────────────────────────────────────────
@@ -61,7 +65,7 @@ function getActionText(decision: DetectedEntity['decision']): string {
  * Entity tooltip shown on hover over a highlight rect.
  * Dark background, entity type label, matched text, action button.
  */
-export function EntityTooltip({ entity, x, y, flipped }: EntityTooltipProps) {
+export function EntityTooltip({ entity, x, y, flipped, onMouseEnter, onMouseLeave }: EntityTooltipProps) {
   const handleAction = (e: Event) => {
     e.stopPropagation()
     dispatch({ type: 'TOGGLE_ENTITY', entityId: entity.id })
@@ -74,6 +78,8 @@ export function EntityTooltip({ entity, x, y, flipped }: EntityTooltipProps) {
         left: `${x}px`,
         top: `${y}px`,
       }}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
     >
       <div class="tooltip-type">{ENTITY_TYPE_LABELS[entity.type]}</div>
       <div class="tooltip-text">{entity.text}</div>

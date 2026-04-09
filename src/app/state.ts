@@ -238,6 +238,24 @@ export function dispatch(event: AppEvent): void {
   }
 }
 
+// ─── Reset callbacks ───────────────────────────────────────────────
+
+/** Cleanup callbacks registered by components for execution on reset */
+const resetCallbacks: Array<() => void> = []
+
+/**
+ * Register a callback to be called when state is reset.
+ * Used by components that maintain module-level caches (e.g., thumbnail cache).
+ * Returns unregister function.
+ */
+export function onReset(callback: () => void): () => void {
+  resetCallbacks.push(callback)
+  return () => {
+    const idx = resetCallbacks.indexOf(callback)
+    if (idx >= 0) resetCallbacks.splice(idx, 1)
+  }
+}
+
 // ─── Reset ─────────────────────────────────────────────────────────
 
 /**
@@ -257,4 +275,9 @@ export function resetState(): void {
   focusedEntity.value = null
   focusedEntityId.value = null
   pdfPassword.value = null
+
+  // Run registered cleanup callbacks (e.g., thumbnail cache clearing)
+  for (const cb of resetCallbacks) {
+    cb()
+  }
 }
