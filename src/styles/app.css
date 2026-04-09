@@ -1,0 +1,428 @@
+/* ═══════════════════════════════════════════════════════════════════
+   Local Redact — App CSS
+   Design tokens, highlight states, screen layout, responsive containers.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ─── Design tokens (CSS custom properties) ────────────────────── */
+
+:root {
+  /* ── Font stacks ─────────────────────────────────────────────── */
+  --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI Variable", "Segoe UI",
+    system-ui, ui-sans-serif, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Monaco, Consolas,
+    monospace;
+
+  /* ── Warm neutral palette ────────────────────────────────────── */
+  --bg: #f4f1ec;
+  --surface: #ffffff;
+  --overlay: #fdfcfa;
+
+  --950: #1c1812;
+  --700: #4a4439;
+  --500: #7b7368;
+  --400: #9a9186;
+  --300: #b5afa8;
+  --200: #d8d3cb;
+  --150: #e5e1da;
+  --100: #edeae4;
+
+  /* ── Semantic colors ─────────────────────────────────────────── */
+  --red: #c41e1e;
+  --red-hover: #a81818;
+  --red-dim: rgba(196, 30, 30, 0.1);
+  --red-soft: #fbf2f2;
+  --red-border: rgba(196, 30, 30, 0.22);
+
+  --green: #1b6e3c;
+  --green-soft: #f0f7f3;
+  --green-border: rgba(27, 110, 60, 0.24);
+
+  --amber: #a86e00;
+  --amber-soft: #fdf7ec;
+  --amber-border: rgba(168, 110, 0, 0.3);
+
+  /* ── Geometry ────────────────────────────────────────────────── */
+  --r-sm: 5px;
+  --r-md: 9px;
+  --r-lg: 12px;
+
+  --shadow-card: 0 1px 2px rgba(28, 24, 18, 0.06),
+    0 4px 16px rgba(28, 24, 18, 0.06);
+  --shadow-drop: 0 2px 8px rgba(28, 24, 18, 0.08),
+    0 1px 2px rgba(28, 24, 18, 0.05);
+
+  /* ── Layout geometry ─────────────────────────────────────────── */
+  --nav-height: 54px;
+  --sidebar-width: 240px;
+  --action-bar-height: 60px;
+  --doc-bar-height: 42px;
+}
+
+/* ─── Reset ────────────────────────────────────────────────────── */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  height: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--950);
+  font-family: var(--font-ui);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ─── App shell layout ─────────────────────────────────────────── */
+
+#app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* ─── Nav bar ──────────────────────────────────────────────────── */
+
+.app-nav {
+  height: var(--nav-height);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 44px;
+  border-bottom: 1px solid var(--150);
+  background: var(--bg);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  flex-shrink: 0;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.mark {
+  width: 20px;
+  height: 26px;
+  flex-shrink: 0;
+}
+
+.wordmark {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--950);
+  line-height: 1;
+}
+
+.wordmark-redact {
+  color: var(--red);
+}
+
+.nav-end {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.nav-link {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--400);
+  text-decoration: none;
+  letter-spacing: -0.01em;
+  transition: color 0.15s;
+}
+
+.nav-link:hover {
+  color: var(--950);
+}
+
+.nav-pill {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  color: var(--300);
+  background: var(--surface);
+  border: 1px solid var(--150);
+  padding: 3px 10px;
+  border-radius: 20px;
+  letter-spacing: 0.02em;
+}
+
+/* ─── Main content area ────────────────────────────────────────── */
+
+.app-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 52px 40px 72px;
+}
+
+/* ─── Sidebar layout (preview screen) ──────────────────────────── */
+
+.preview-layout {
+  display: flex;
+  flex: 1;
+  height: calc(100vh - var(--nav-height));
+  overflow: hidden;
+}
+
+.preview-sidebar {
+  width: var(--sidebar-width);
+  min-width: var(--sidebar-width);
+  border-right: 1px solid var(--150);
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.preview-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ─── Document toolbar ─────────────────────────────────────────── */
+
+.doc-bar {
+  height: var(--doc-bar-height);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--150);
+  background: var(--surface);
+  flex-shrink: 0;
+  padding: 0 16px;
+}
+
+/* ─── Document viewport ────────────────────────────────────────── */
+
+.doc-viewport {
+  flex: 1;
+  overflow: auto;
+  display: flex;
+  justify-content: center;
+  padding: 24px;
+  background: var(--bg);
+}
+
+.doc-viewport-inner {
+  position: relative;
+}
+
+/* ─── Action bar (footer) ──────────────────────────────────────── */
+
+.action-bar {
+  height: var(--action-bar-height);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  border-top: 1px solid var(--150);
+  background: var(--surface);
+  flex-shrink: 0;
+}
+
+/* ─── Highlight state classes (SVG overlay) ────────────────────── */
+
+/* REDACT — red filled highlight */
+.hl-r rect {
+  fill: #fbf3f3;
+  fill-opacity: 0.85;
+  stroke: rgba(196, 30, 30, 0.24);
+  stroke-width: 1;
+  cursor: pointer;
+  transition: fill 0.15s ease, stroke 0.15s ease;
+}
+
+.hl-r:hover rect {
+  fill: rgba(196, 30, 30, 0.15);
+  stroke: rgba(196, 30, 30, 0.4);
+}
+
+/* KEEP — green outlined highlight */
+.hl-g rect {
+  fill: #eff7f3;
+  fill-opacity: 0.85;
+  stroke: rgba(27, 110, 60, 0.24);
+  stroke-width: 1;
+  cursor: pointer;
+  transition: fill 0.15s ease, stroke 0.15s ease;
+}
+
+.hl-g:hover rect {
+  fill: rgba(27, 110, 60, 0.12);
+  stroke: rgba(27, 110, 60, 0.4);
+}
+
+/* UNCERTAIN — amber dashed highlight with pulse animation */
+.hl-a rect {
+  fill: #fdf7ec;
+  fill-opacity: 0.85;
+  stroke: rgba(168, 110, 0, 0.3);
+  stroke-width: 1;
+  stroke-dasharray: 4 2;
+  cursor: pointer;
+  animation: hl-pulse 2s ease-in-out infinite;
+  transition: fill 0.15s ease;
+}
+
+.hl-a:hover rect {
+  fill: rgba(168, 110, 0, 0.15);
+  stroke: rgba(168, 110, 0, 0.5);
+}
+
+@keyframes hl-pulse {
+  0%,
+  100% {
+    fill-opacity: 0.85;
+  }
+  50% {
+    fill-opacity: 0.55;
+  }
+}
+
+/* Focused highlight — dark outline applied via panel-to-document linking */
+.hl-focused rect {
+  outline: 2px solid var(--950);
+  outline-offset: 1px;
+  stroke: var(--950);
+  stroke-width: 2;
+}
+
+/* ─── Responsive containers ────────────────────────────────────── */
+
+.container-sm {
+  width: 100%;
+  max-width: 488px;
+  margin: 0 auto;
+}
+
+.container-md {
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.container-lg {
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+/* ─── Animation: rise-in ───────────────────────────────────────── */
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.anim-rise {
+  animation: rise 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ─── Utility classes ──────────────────────────────────────────── */
+
+.text-mono {
+  font-family: var(--font-mono);
+}
+
+.text-muted {
+  color: var(--400);
+}
+
+.text-center {
+  text-align: center;
+}
+
+/* ─── Note bar (output transformation note) ────────────────────── */
+
+.note-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  background: var(--100);
+  border-bottom: 1px solid var(--150);
+  font-size: 12px;
+  color: var(--500);
+  flex-shrink: 0;
+}
+
+.note-bar-swatch {
+  display: inline-block;
+  width: 14px;
+  height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.note-bar-swatch--preview {
+  background: rgba(196, 30, 30, 0.15);
+  border: 1px solid rgba(196, 30, 30, 0.24);
+}
+
+.note-bar-swatch--output {
+  background: var(--950);
+}
+
+/* ─── Footer ───────────────────────────────────────────────────── */
+
+.app-footer {
+  border-top: 1px solid var(--150);
+  padding: 14px 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.footer-l {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--300);
+  letter-spacing: -0.01em;
+}
+
+.footer-r {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.footer-link {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--300);
+  text-decoration: none;
+  letter-spacing: -0.01em;
+}
+
+.footer-link:hover {
+  color: var(--500);
+}
