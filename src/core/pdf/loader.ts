@@ -4,6 +4,23 @@
 import * as pdfjsLib from 'pdfjs-dist'
 import type { PDFDocumentProxy } from 'pdfjs-dist'
 
+// Polyfill URL.parse for Safari < 18 (pdfjs-dist 5.x uses it in _isSameOrigin
+// and several utility functions). Without this, worker initialization fails
+// because _isSameOrigin() returns false → PDF.js creates a CDN blob wrapper
+// that may be blocked by CSP or Safari module worker restrictions.
+if (typeof URL.parse !== 'function') {
+  ;(URL as unknown as Record<string, unknown>).parse = function parse(
+    url: string,
+    base?: string
+  ): URL | null {
+    try {
+      return new URL(url, base)
+    } catch {
+      return null
+    }
+  }
+}
+
 // Configure PDF.js web worker for pdfjs-dist 5.x.
 // The worker file is copied to public/ by a Vite plugin (see vite.config.ts)
 // so it is served as a raw static file without Vite transforms. This avoids
