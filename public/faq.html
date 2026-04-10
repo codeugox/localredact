@@ -285,6 +285,16 @@
       </details>
 
       <details>
+        <summary>How does the redaction work?</summary>
+        <div class="faq-body">
+          Each page is rendered to a high-resolution image (300 DPI). Black bars are drawn over the detected
+          regions at the pixel level. The images are assembled into a new PDF. The output contains only
+          images — no text layer, no searchable content, and no metadata from the original file. This is not
+          the same as drawing a box on top of text — the original data is destroyed, not hidden.
+        </div>
+      </details>
+
+      <details>
         <summary>How do I verify nothing is sent to a server?</summary>
         <div class="faq-body">
           Open your browser's DevTools (F12 or Cmd+Option+I), go to the Network tab, and clear it. Then process a
@@ -344,10 +354,20 @@
       </details>
 
       <details>
+        <summary>What does 'Identity only' mode keep?</summary>
+        <div class="faq-body">
+          All dollar amounts (wages, taxes, withholding, deductions), tax year dates, pay period dates, form
+          numbers, and box labels. Everything that identifies a person — names, SSN, addresses, phone numbers,
+          email addresses, bank accounts — is redacted.
+        </div>
+      </details>
+
+      <details>
         <summary>Is my password-protected PDF safe?</summary>
         <div class="faq-body">
-          Yes. The password you enter is used locally by your browser to decrypt the PDF. It's never stored or
-          transmitted. The password is cleared from memory when you click "Start over" or close the tab.
+          Yes. The password you enter is used locally by your browser to decrypt the PDF. It is never stored or
+          transmitted. The password is automatically cleared from memory once redaction completes, and again if
+          you click "Start over" or close the tab.
         </div>
       </details>
 
@@ -362,8 +382,8 @@
       <details>
         <summary>Is this open source?</summary>
         <div class="faq-body">
-          Yes. The full source code is available on GitHub. You can audit every line of code, build it yourself,
-          and host it on your own infrastructure.
+          Yes. The full source code is available on <a href="https://github.com/codeugox/localredact" target="_blank" rel="noopener noreferrer">GitHub</a>. You can audit every line of code, build it yourself,
+          and host it on your own infrastructure. Licensed under MIT.
         </div>
       </details>
     </div>
@@ -375,7 +395,7 @@
     <div class="footer-r">
       <a class="footer-link" href="/">App</a>
       <a class="footer-link" href="/privacy.html">Privacy</a>
-      <a class="footer-link" href="https://github.com/codeugox/localredact" target="_blank" rel="noopener">Source</a>
+      <a class="footer-link" href="https://github.com/codeugox/localredact" target="_blank" rel="noopener noreferrer">Source</a>
     </div>
   </footer>
 
