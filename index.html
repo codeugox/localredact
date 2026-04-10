@@ -24,15 +24,6 @@
         <p>Local Redact requires JavaScript to run. Please enable JavaScript in your browser settings.</p>
       </div>
     </noscript>
-    <script>
-      if (!window.Worker || !window.File || !window.Promise) {
-        document.getElementById('app').innerHTML =
-          '<div style="text-align:center;padding:60px 20px;font-family:system-ui">' +
-          '<h1>Browser Not Supported</h1>' +
-          '<p>Local Redact requires a modern browser with Web Worker support.</p>' +
-          '<p>Please use Chrome 118+, Firefox 115+, Safari 16.4+, or Edge 118+.</p></div>';
-      }
-    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
