@@ -52,7 +52,7 @@ export function PasswordModal({ reason, onSubmit, onCancel }: PasswordModalProps
   const handleSubmit = useCallback(
     (e: Event) => {
       e.preventDefault()
-      const password = passwordRef.current.trim()
+      const password = passwordRef.current
       if (password.length === 0) return
       onSubmit(password)
     },

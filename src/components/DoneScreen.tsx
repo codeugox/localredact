@@ -78,7 +78,7 @@ export function DoneScreen() {
               class="drop-footer-link"
               href="https://github.com/codeugox/localredact"
               target="_blank"
-              rel="noopener"
+              rel="noopener noreferrer"
             >Source</a>
           </div>
         </div>

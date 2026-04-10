@@ -12,6 +12,7 @@ import {
   keepCount,
   uncertainCount,
   focusedEntity,
+  pdfPassword,
   dispatch,
 } from '../app/state'
 import type { EntityType, RedactionDecision, RedactionMode } from '../core/detectors/entities'
@@ -110,12 +111,16 @@ async function rerunDetection(file: File, mode: RedactionMode): Promise<void> {
 
   try {
     const { detectDocument } = await import('../core/pipeline/detect-document')
+    const storedPassword = pdfPassword.value
     const result = await detectDocument(
       file,
       mode,
       (page, total) => {
         dispatch({ type: 'DETECTION_PROGRESS', page, total })
-      }
+      },
+      storedPassword
+        ? (updatePassword) => updatePassword(storedPassword)
+        : undefined
     )
     dispatch({
       type: 'DETECTION_COMPLETE',

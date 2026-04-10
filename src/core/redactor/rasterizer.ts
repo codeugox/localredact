@@ -20,6 +20,7 @@ export const FALLBACK_SCALE = 240 / 72
  * triggering the fallback path for validator testing.
  */
 export function isDpiFallbackTestEnabled(): boolean {
+  if (!import.meta.env.DEV) return false
   try {
     const params = new URLSearchParams(window.location.search)
     return params.get('dpi-fallback-test') === 'true'
