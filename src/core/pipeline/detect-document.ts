@@ -553,10 +553,16 @@ export async function detectDocument(
       const page = await pdf.getPage(i)
       const viewport = page.getViewport({ scale: 1 })
 
-      // Get text content with disableNormalization: true to prevent offset drift
-      const textContent = await page.getTextContent({
-        disableNormalization: true,
-      })
+      // Use streamTextContent + getReader instead of getTextContent to avoid
+      // `for await...of` on ReadableStream, which Safari < 17.2 doesn't support.
+      const stream = page.streamTextContent({ disableNormalization: true })
+      const reader = stream.getReader()
+      const textContent: { items: any[] } = { items: [] }
+      for (;;) {
+        const { done, value } = await reader.read()
+        if (done) break
+        textContent.items.push(...value.items)
+      }
 
       // Filter to text items (exclude TextMarkedContent) and map to our TextItem shape.
       // pdfjs-dist's TextItem has additional fields (dir, fontName) we don't need.
