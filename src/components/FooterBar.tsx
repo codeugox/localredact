@@ -77,7 +77,9 @@ async function handleDownload(): Promise<void> {
     dispatch({ type: 'REDACTION_COMPLETE' })
   } catch (err) {
     const message =
-      err instanceof Error ? err.message : 'Redaction failed. Please try again.'
+      err instanceof Error
+        ? 'An error occurred while creating the redacted PDF. Please try again.'
+        : 'Redaction failed. Please try again.'
     dispatch({ type: 'ERROR', message })
   }
 }

@@ -112,7 +112,7 @@ function createMockCanvas(width: number, height: number) {
 // ─── Burner Tests ───────────────────────────────────────────────────
 
 describe('burnRedactions', () => {
-  it('should call beginPath, moveTo, lineTo, closePath, fill for each quad', () => {
+  it('should call fillRect once for each quad (padded bounding box)', () => {
     const { canvas, mockCtx } = createMockCanvas(200, 200)
     const viewport = createMockViewport(1, 200, 200)
 
@@ -120,32 +120,26 @@ describe('burnRedactions', () => {
 
     burnRedactions(canvas, [quad], viewport)
 
-    expect(mockCtx.beginPath).toHaveBeenCalledTimes(1)
-    expect(mockCtx.moveTo).toHaveBeenCalledTimes(1)
-    expect(mockCtx.lineTo).toHaveBeenCalledTimes(3)
-    expect(mockCtx.closePath).toHaveBeenCalledTimes(1)
-    expect(mockCtx.fill).toHaveBeenCalledTimes(1)
+    expect(mockCtx.fillRect).toHaveBeenCalledTimes(1)
   })
 
-  it('should transform quad coordinates from PDF space to canvas space', () => {
+  it('should transform quad coordinates from PDF space to canvas space with padding', () => {
     const { canvas, mockCtx } = createMockCanvas(200, 200)
     const viewport = createMockViewport(1, 200, 200)
 
     // Quad: BL(50,50), BR(150,50), TR(150,150), TL(50,150)
     // PDF→Canvas with pageHeight=200, scale=1:
-    // (50,50) → (50, 150), (150,50) → (150, 150),
-    // (150,150) → (150, 50), (50,150) → (50, 50)
+    // (50,50)→(50,150), (150,50)→(150,150), (150,150)→(150,50), (50,150)→(50,50)
+    // Bounding box: x=50, y=50, w=100, h=100
+    // With 2px padding: x=48, y=48, w=104, h=104
     const quad: Quad = [50, 50, 150, 50, 150, 150, 50, 150]
 
     burnRedactions(canvas, [quad], viewport)
 
-    expect(mockCtx.moveTo).toHaveBeenCalledWith(50, 150)
-    expect(mockCtx.lineTo).toHaveBeenNthCalledWith(1, 150, 150)
-    expect(mockCtx.lineTo).toHaveBeenNthCalledWith(2, 150, 50)
-    expect(mockCtx.lineTo).toHaveBeenNthCalledWith(3, 50, 50)
+    expect(mockCtx.fillRect).toHaveBeenCalledWith(48, 48, 104, 104)
   })
 
-  it('should apply scale when transforming coordinates', () => {
+  it('should apply scale when transforming coordinates with padding', () => {
     const { canvas, mockCtx } = createMockCanvas(400, 400)
     const viewport = createMockViewport(2, 200, 200)
 
@@ -154,14 +148,10 @@ describe('burnRedactions', () => {
     burnRedactions(canvas, [quad], viewport)
 
     // With scale=2, pageHeight=200:
-    // (50,50) → (100, 300)
-    expect(mockCtx.moveTo).toHaveBeenCalledWith(100, 300)
-    // (150,50) → (300, 300)
-    expect(mockCtx.lineTo).toHaveBeenNthCalledWith(1, 300, 300)
-    // (150,150) → (300, 100)
-    expect(mockCtx.lineTo).toHaveBeenNthCalledWith(2, 300, 100)
-    // (50,150) → (100, 100)
-    expect(mockCtx.lineTo).toHaveBeenNthCalledWith(3, 100, 100)
+    // Canvas points: (100,300), (300,300), (300,100), (100,100)
+    // Bounding box: x=100, y=100, w=200, h=200
+    // With 2px padding: x=98, y=98, w=204, h=204
+    expect(mockCtx.fillRect).toHaveBeenCalledWith(98, 98, 204, 204)
   })
 
   it('should set fill style to #000000 (black)', () => {
@@ -184,11 +174,7 @@ describe('burnRedactions', () => {
 
     burnRedactions(canvas, [quad1, quad2], viewport)
 
-    expect(mockCtx.beginPath).toHaveBeenCalledTimes(2)
-    expect(mockCtx.moveTo).toHaveBeenCalledTimes(2)
-    expect(mockCtx.lineTo).toHaveBeenCalledTimes(6)
-    expect(mockCtx.closePath).toHaveBeenCalledTimes(2)
-    expect(mockCtx.fill).toHaveBeenCalledTimes(2)
+    expect(mockCtx.fillRect).toHaveBeenCalledTimes(2)
   })
 
   it('should handle empty quads array without error', () => {
@@ -200,7 +186,7 @@ describe('burnRedactions', () => {
     expect(mockCtx.fill).not.toHaveBeenCalled()
   })
 
-  it('should draw polygon (moveTo+lineTo) not fillRect', () => {
+  it('should draw padded fillRect, not polygon path', () => {
     const { canvas, mockCtx } = createMockCanvas(200, 200)
     const viewport = createMockViewport(1, 200, 200)
 
@@ -208,10 +194,11 @@ describe('burnRedactions', () => {
 
     burnRedactions(canvas, [quad], viewport)
 
-    // Should use polygon path, not fillRect
-    expect(mockCtx.fillRect).not.toHaveBeenCalled()
-    expect(mockCtx.moveTo).toHaveBeenCalledTimes(1)
-    expect(mockCtx.lineTo).toHaveBeenCalledTimes(3)
+    // Should use fillRect with padding, not polygon path
+    expect(mockCtx.fillRect).toHaveBeenCalledTimes(1)
+    expect(mockCtx.beginPath).not.toHaveBeenCalled()
+    expect(mockCtx.moveTo).not.toHaveBeenCalled()
+    expect(mockCtx.lineTo).not.toHaveBeenCalled()
   })
 
   it('should throw if canvas context is null', () => {
@@ -228,23 +215,19 @@ describe('burnRedactions', () => {
     )
   })
 
-  it('should draw correct sequence: beginPath → moveTo → 3×lineTo → closePath → fill', () => {
-    const { canvas, calls } = createMockCanvas(200, 200)
+  it('should clamp padded bounding box to canvas boundaries', () => {
+    const { canvas, mockCtx } = createMockCanvas(200, 200)
     const viewport = createMockViewport(1, 200, 200)
 
-    const quad: Quad = [10, 10, 50, 10, 50, 30, 10, 30]
+    // Quad near edge: canvas points will be near edges after transform
+    // PDF (0,199)→canvas (0,1), (1,199)→(1,1), (1,200)→(1,0), (0,200)→(0,0)
+    // Bounding box: x=0, y=0, w=1, h=1
+    // With 2px padding clamped: x=0, y=0, w=3, h=3
+    const quad: Quad = [0, 199, 1, 199, 1, 200, 0, 200]
 
     burnRedactions(canvas, [quad], viewport)
 
-    expect(calls.map((c) => c.method)).toEqual([
-      'beginPath',
-      'moveTo',
-      'lineTo',
-      'lineTo',
-      'lineTo',
-      'closePath',
-      'fill',
-    ])
+    expect(mockCtx.fillRect).toHaveBeenCalledWith(0, 0, 3, 3)
   })
 })
 

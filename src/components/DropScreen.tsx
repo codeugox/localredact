@@ -428,7 +428,7 @@ export function DropScreen() {
             class="drop-footer-link"
             href="https://github.com/codeugox/localredact"
             target="_blank"
-            rel="noopener"
+            rel="noopener noreferrer"
           >Source</a>
           <span class="drop-footer-sep">·</span>
           <span class="drop-footer-link" style={{ cursor: 'default' }}>MIT License</span>

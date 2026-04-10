@@ -86,7 +86,7 @@ export function luhn(raw: string): boolean {
  * Area code and exchange cannot start with 0 or 1.
  */
 export const PHONE_US =
-  /\b(?:\+1[-.\s]?)?\(?([2-9][0-9]{2})\)?[-.\s]?([2-9][0-9]{2})[-.\s]?([0-9]{4})\b/g
+  /(?<!\d)(?:\+1[-.\s]?)?\(?([2-9][0-9]{2})\)?[-.\s]?([2-9][0-9]{2})[-.\s]?([0-9]{4})\b/g
 
 // ──────────────────────────────────────────────────
 // EMAIL_ADDRESS

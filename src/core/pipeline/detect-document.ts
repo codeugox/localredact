@@ -541,6 +541,9 @@ export async function detectDocument(
     reason: number
   ) => void
 ): Promise<DetectionResult> {
+  // Reset entity counter so IDs start fresh for each document
+  entityCounter = 0
+
   // Dynamic import to avoid pulling pdfjs-dist into unit test bundles
   const { loadPDF, destroyPDF } = await import('../pdf/loader')
 

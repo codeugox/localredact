@@ -278,6 +278,7 @@ export function dispatch(event: AppEvent): void {
 
     case 'REDACTION_COMPLETE': {
       appState.value = 'DONE'
+      pdfPassword.value = null
       break
     }
 
@@ -378,6 +379,5 @@ export function resetState(): void {
     cb()
   }
 
-  // 8. Emit observable cleanup confirmation for validators
-  console.log('LocalRedact: cleanup complete — PDF destroyed, canvases released, URLs revoked, state reset')
+
 }
