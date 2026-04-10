@@ -76,8 +76,7 @@ export function DoneScreen() {
             <span class="drop-footer-sep">·</span>
             <a
               class="drop-footer-link"
-              href="https://github.com"
-              title="GitHub repository — coming soon"
+              href="https://github.com/codeugox/localredact"
               target="_blank"
               rel="noopener"
             >Source</a>
