@@ -312,30 +312,29 @@ body {
   stroke: rgba(27, 110, 60, 0.4);
 }
 
-/* UNCERTAIN — amber dashed highlight with pulse animation */
+/* UNCERTAIN — amber highlight with pulse animation (action needed) */
 .hl-a rect {
-  fill: #fdf7ec;
-  fill-opacity: 0.85;
-  stroke: rgba(168, 110, 0, 0.3);
-  stroke-width: 1;
-  stroke-dasharray: 4 2;
+  fill: #FEF3C7;
+  fill-opacity: 0.9;
+  stroke: rgba(217, 119, 6, 0.6);
+  stroke-width: 1.5;
   cursor: pointer;
-  animation: hl-pulse 2s ease-in-out infinite;
+  animation: hl-pulse 2.5s ease-in-out infinite;
   transition: fill 0.15s ease;
 }
 
 .hl-a:hover rect {
-  fill: rgba(168, 110, 0, 0.15);
-  stroke: rgba(168, 110, 0, 0.5);
+  fill: rgba(251, 191, 36, 0.35);
+  stroke: rgba(217, 119, 6, 0.8);
 }
 
 @keyframes hl-pulse {
   0%,
   100% {
-    fill-opacity: 0.85;
+    fill-opacity: 0.9;
   }
   50% {
-    fill-opacity: 0.55;
+    fill-opacity: 0.5;
   }
 }
 
@@ -1300,8 +1299,8 @@ body {
 }
 
 .sw-a {
-  background: var(--amber-soft);
-  border: 1.5px dashed var(--amber-border);
+  background: #FEF3C7;
+  border: 1.5px solid rgba(217, 119, 6, 0.5);
 }
 
 .legend-text {
@@ -1444,7 +1443,7 @@ body {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--amber);
+  background: #d97706;
   border: 1.5px solid var(--surface);
 }
 
