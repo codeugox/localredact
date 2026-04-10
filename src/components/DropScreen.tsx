@@ -431,7 +431,7 @@ export function DropScreen() {
             rel="noopener noreferrer"
           >Source</a>
           <span class="drop-footer-sep">·</span>
-          <span class="drop-footer-link" style={{ cursor: 'default' }}>MIT License</span>
+          <a class="drop-footer-link" href="https://github.com/codeugox/localredact/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">MIT License</a>
         </div>
       </div>
     </div>
