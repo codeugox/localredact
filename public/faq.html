@@ -291,7 +291,7 @@
         <summary>What about scanned or image-only PDFs?</summary>
         <div class="faq-body">
           Version 1.0 works with digital PDFs that have a text layer (most PDFs created from Word, Excel, or other
-          software). Scanned documents and image-only PDFs are not supported yet. Image/OCR support is planned for v1.2.
+          software). Scanned documents and image-only PDFs are not supported yet. Support for scanned documents is planned for a future release.
         </div>
       </details>
 
@@ -301,7 +301,7 @@
           Each page is rendered to a high-resolution image (300 DPI). Black bars are drawn over the detected
           regions at the pixel level. The images are assembled into a new PDF. The output contains only
           images — no text layer, no searchable content, and no metadata from the original file. This is not
-          the same as drawing a box on top of text — the original data is destroyed, not hidden.
+          This is different from tools that draw a box on top of text, where the content is still in the file.
         </div>
       </details>
 
@@ -320,10 +320,9 @@
         <div class="faq-body">
           Social Security Numbers (SSN), Individual Taxpayer IDs (ITIN), Employer IDs (EIN), credit card numbers
           (with Luhn validation), phone numbers, email addresses, dates of birth, street addresses, city/state/ZIP,
-          bank account numbers, routing numbers, passport numbers, ZIP codes, driver's license numbers, dollar
+          bank account numbers, routing numbers, passport numbers, ZIP codes, dollar
           amounts, and dates. Person names are also detected when they appear next to form labels such as
-          "Patient:", "Name:", or "Emergency Contact:". However, names in running text or unlabeled names will
-          not be caught in V1.0 — V1.1 will add a NER (Named Entity Recognition) model for broader name detection.
+          "Patient:", "Name:", or "Emergency Contact:". Names in running text without a nearby label may not be detected. Broader name detection is planned for a future release.
         </div>
       </details>
 
@@ -332,9 +331,8 @@
         <div class="faq-body">
           The review screen shows you exactly what will be redacted before you download — every detected item is
           highlighted, and you can toggle items between "redact" and "keep." Labeled names on forms (e.g.
-          "Patient:", "Name:", "Emergency Contact:") are detected in V1.0, but names in running text or names
-          without nearby labels may be missed. V1.1 adds AI-powered detection using a NER model for better name
-          and entity coverage. Always review the preview carefully before downloading to catch anything the
+          "Patient:", "Name:", "Emergency Contact:") are detected, but names in running text or names
+          without nearby labels may be missed. Broader name and entity detection is planned for a future release. Always review the preview carefully before downloading to catch anything the
           automated detector may have skipped.
         </div>
       </details>
