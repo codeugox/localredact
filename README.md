@@ -17,9 +17,9 @@
 
 ## What it does
 
-Drop a PDF. The app finds and highlights personal information —
-SSNs, names, addresses, phone numbers, credit cards, account
-numbers — and lets you review every detection before anything
+Drop a PDF. The app finds and highlights personal information
+(SSNs, names, addresses, phone numbers, credit cards, account
+numbers) and lets you review every detection before anything
 is removed.
 
 Choose your mode. **Identity only** keeps all financial figures
@@ -32,7 +32,7 @@ you're satisfied, click **Download redacted PDF**.
 The output is a new PDF where each page has been converted to a
 high-resolution image (300 DPI) with black bars burned in at the
 pixel level. The output contains no text layer and no searchable
-content — the redacted information is not hidden behind a box,
+content. The redacted information is not hidden behind a box,
 it is replaced with solid black pixels.
 
 ---
@@ -77,7 +77,7 @@ Removes everything that identifies a person:
 - Bank account and routing numbers
 - Dates of birth
 - Passport numbers
-- Person names (when labeled — e.g., "Patient: Jane Doe")
+- Person names (when labeled, e.g. "Patient: Jane Doe")
 
 Keeps all financial data:
 
@@ -94,7 +94,7 @@ Removes everything detected, including financial figures.
 ## How the redaction works
 
 Most redaction tools draw a black box on top of text. The text
-is still in the file — select it, copy it, or open the PDF in
+is still in the file. Select it, copy it, or open the PDF in
 a text editor and it's readable. This is how well-known document
 leak incidents have happened.
 
@@ -102,18 +102,18 @@ Local Redact works differently. Each page is rendered to a
 high-resolution image (300 DPI). Black rectangles are drawn
 over the detected regions at the pixel level. The images are
 then assembled into a new PDF. The output contains only raster
-images — no text layer, no searchable content, and no original
+images, no text layer, no searchable content, and no original
 metadata.
 
 ---
 
 ## Detection
 
-V1.0 uses **pattern matching** to detect structured PII:
+Local Redact uses **pattern matching** to detect structured PII:
 
 - SSNs and ITINs (with SSA validity rules)
-- EINs (context-aware — labels like "EIN:" boost confidence)
-- Credit card numbers (Visa, Mastercard, Amex, Discover — validated with Luhn checksum)
+- EINs (context-aware: labels like "EIN:" boost confidence)
+- Credit card numbers (Visa, Mastercard, Amex, Discover, validated with Luhn checksum)
 - US phone numbers
 - Email addresses
 - Street addresses and city/state/ZIP
@@ -127,6 +127,19 @@ Detection is context-sensitive: when a value like `12-3456789`
 appears near a label like "EIN:", confidence is higher. Without
 context, ambiguous patterns are flagged for your review rather
 than auto-redacted.
+
+---
+
+## Features
+
+- Context-sensitive regex detection with confidence scoring
+- Rasterized redaction at 300 DPI (no text layer in output)
+- Identity-only and full-redaction modes
+- Interactive preview with per-entity toggle and live summary
+- Password-protected PDF support
+- Keyboard shortcuts (Tab / R / K) for efficient review
+
+More detection capabilities and file format support coming soon.
 
 ---
 
@@ -160,25 +173,8 @@ Open `http://localhost:5173`
 |---|---|
 | `npm run dev` | Start dev server |
 | `npm run build` | Type-check + production build |
-| `npm test` | Run all tests (723 tests) |
+| `npm test` | Run all tests |
 | `npm run typecheck` | TypeScript type checking only |
-
----
-
-## Roadmap
-
-- [x] Regex + checksum detection (SSN, EIN, credit cards, phones, emails, addresses, accounts)
-- [x] Context-sensitive scoring (labels boost confidence, ambiguous values flagged for review)
-- [x] Rasterized redaction — pixel-level, no text layer in output
-- [x] Identity-only and full-redaction modes
-- [x] Preview screen with per-entity toggle and live summary
-- [x] Password-protected PDF support
-- [x] Keyboard shortcuts (Tab / R / K) for efficient review
-- [ ] NER model for names in narrative text (v1.1)
-- [ ] Scanned document / OCR support (v1.2)
-- [ ] Image file support — JPG, PNG (v1.2)
-- [ ] Batch processing — multiple files, ZIP download (v1.3)
-- [ ] Desktop app — Mac + Windows (v3.0)
 
 ---
 
@@ -188,14 +184,14 @@ Issues and pull requests are welcome.
 
 If you find a document type where detection is weak, open an
 [issue](https://github.com/codeugox/localredact/issues) describing what was missed and what type of document it
-was. **Never share real documents or real PII in issues** — use
+was. **Never share real documents or real PII in issues.** Use
 synthetic examples.
 
 ---
 
 ## License
 
-[MIT](LICENSE) — free to use, modify, and distribute.
+[MIT](LICENSE)
 
 ---
 
@@ -206,7 +202,7 @@ to AI tools and file-sharing platforms without realizing the
 data leaves their device. Local Redact solves that by keeping
 the browser in charge of all the work.
 
-The zero-data architecture is not a marketing claim — it is
+The zero-data architecture is not a marketing claim. It is
 a technical constraint. The app ships with `connect-src 'none'`
 in its Content Security Policy, and there is no server endpoint
 to send data to.
